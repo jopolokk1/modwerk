@@ -14,7 +14,11 @@
 #define BANK(b) (0x400e21e0u + (uint32_t)(b) * 0x9b340u) /* a bank's RAM */
 #define PATTERN 0x8ed8u
 #define MIDI_TRACK(t) (0x48d0u + (uint32_t)(t) * 0x8b0u) /* a MIDI track's record in its pattern */
-#define LOCK30(s) (0x30u + (uint32_t)(s) * 32u + 30u)     /* step s's spare lock byte */
+#define LOCK30(s) (0x30u + (uint32_t)(s) * 32u + 30u)     /* step s's spare lock byte: its key */
+#define LOCK31(s) (0x30u + (uint32_t)(s) * 32u + 31u)     /* the other: arp note (high nibble) and shift (low, signed) */
+#define ARP_POS(t) (0x46c77b17u + 10u * (t))            /* MIDI track t's arpeggiator: its place in the note sequence (0..LEN) */
+#define ARP_MODE(t) (0x46c76fe0u + 32u * (t) + 14u)     /* its MODE as it plays (locks applied), 0 OFF */
+#define LIVE_KEY(t) (0x46c76df1u + 0x44u * (t))         /* the track's KEY as it plays */
 #define CS1_PATTERNS 0x1001614eu                        /* the current bank's patterns, battery-backed */
 #define PLAY_BANK 0x800065bdu                           /* the bank and pattern the sequencer plays */
 #define PLAY_PATTERN 0x800065beu
@@ -73,7 +77,7 @@ static unsigned held_lock(uint32_t track, unsigned s, unsigned n)
 
 /* Per MIDI track, the last answer and what it was for: one scan per step, not per note. A lock edit bumps gen. */
 static uint32_t cache_for[8];
-static uint8_t cache_key[8];
+static uint8_t cache_key[8], cache_shift[8];
 static uint8_t gen = 1;
 
 unsigned akl_key(unsigned t)
@@ -86,22 +90,10 @@ unsigned akl_key(unsigned t)
         uint32_t pattern = BANK(b) + p * PATTERN, track = pattern + MIDI_TRACK(t);
         unsigned n = length(pattern, track);
         cache_key[t] = (uint8_t)held_lock(track, s % n, n);
+        cache_shift[t] = U8(track + LOCK31(s % n)); /* a shift holds on its own step only */
         cache_for[t] = want;
     }
     return cache_key[t];
-}
-
-/* ev_midi_note_key's claim: the tracks a lock holds on. */
-int akl_claims(unsigned t) { return akl_key(t) != NONE; }
-
-/* The note of track t, a2's byte at the site: moved into the step's key. 1 when the note is ours to send as it is
- * now, 0 for stock's own KEY correction. */
-int akl_note(unsigned t, volatile int8_t *note)
-{
-    unsigned key = akl_key(t);
-    if (key == NONE) return 0;
-    if (*note >= 0) *note = (int8_t)akl_snap(*note, key);
-    return 1;
 }
 
 /* Stock's KEY (OFF, then 1 + 2 * root + minor) as a lock value, the start of a new lock. */
@@ -115,6 +107,54 @@ static unsigned from_stock(unsigned k)
  * panel's own rows are read. */
 static unsigned held_trigs(void) { return U8(KEY_ROWS) | (unsigned)U8(KEY_ROWS + 1u) << 8; }
 
+/* Which trigs mean what in ARP SETUP: the first held is the step, a second one tapped while it is held the arp
+ * note, as stock's own editor reads a held trig. Seen on every redraw (stock redraws on each trig) and turn. */
+static int order_step = -1, order_note = -1, show_shift; /* show_shift: the KEY box shows the shift, not the key */
+static unsigned order_prev;
+static int lowest(unsigned m) { int k = 0; while (!(m >> k & 1u)) ++k; return k; }
+static void track_trigs(void)
+{
+    unsigned h = held_trigs(), fresh = h & ~order_prev;
+    if (!h) order_step = order_note = -1, show_shift = 0;
+    else if (order_step < 0 || !(h >> order_step & 1u)) { order_step = lowest(fresh ? fresh : h); order_note = -1; show_shift = 0; }
+    else if (fresh & ~(1u << order_step)) order_note = lowest(fresh & ~(1u << order_step)), show_shift = 1;
+    order_prev = h;
+}
+
+/* The step's arp note shift, when the arp on track t is about to send the note it names; NONE otherwise. While the
+ * note is sent the arp's place is that note's own (emulator, calibrated against stock's arp). */
+static unsigned shift_now(unsigned t)
+{
+    unsigned r = cache_shift[t];
+    if (r == NONE || !U8(ARP_MODE(t))) return NONE;
+    unsigned pos = U8(ARP_POS(t)), n = U8(LIVE_KEY(t) - 0x11u + 0x0eu) + 1u; /* the arp's LEN, setup +0x0e, 0-15 */
+    return n && pos % n == (r >> 4) ? r : NONE;
+}
+
+/* A note moved k steps through the key, or k semitones with no key (OFF). */
+int akl_move(int note, unsigned key, int k)
+{
+    if (key && key <= LAST) note = akl_snap(note, key);
+    for (; k > 0 && note < 127; --k) do ++note; while (key && key <= LAST && akl_snap(note, key) != note && note < 127);
+    for (; k < 0 && note > 0; ++k) do --note; while (key && key <= LAST && akl_snap(note, key) != note && note > 0);
+    return note;
+}
+
+/* ev_midi_note_key's claim: the tracks a lock holds on, or whose arp note the step shifts now. */
+int akl_claims(unsigned t) { return akl_key(t) != NONE || shift_now(t) != NONE; }
+
+/* The note of track t, a2's byte at the site: moved into the step's key, and by the step's shift when the arp sends
+ * the note it names. 1 when the note is ours to send as it is now, 0 for stock's own KEY correction. */
+int akl_note(unsigned t, volatile int8_t *note)
+{
+    unsigned key = akl_key(t), r = shift_now(t);
+    if (key == NONE && r == NONE) return 0;
+    if (key == NONE) key = from_stock(U8(LIVE_KEY(t)));
+    if (*note >= 0) *note = (int8_t)(r == NONE ? akl_snap(*note, key) : akl_move(*note, key, (int)((r & 15u) ^ 8u) - 8));
+    return 1;
+}
+
+
 /* ev_arp_setup_knob, encoder F (KEY) with trigs held: each held trig's step gets a lock, delta values on from its
  * own (from the track's KEY when it has none). Below OFF is no lock. Written as stock's lock editor writes: the
  * pattern, its battery-backed copy, the edited flags. */
@@ -127,7 +167,7 @@ void akl_knob(int delta)
     uint32_t mirror = CS1_PATTERNS + p * PATTERN + MIDI_TRACK(t);
     unsigned stock = U8(bank + U8(UI_PART) % 4u * 0x18b2u + PART_KEY(t));
     for (unsigned k = 0; k < 16u; ++k) {
-        if (!(held >> k & 1u)) continue;
+        if (!(held >> k & 1u) || (int)k == order_note) continue;
         unsigned s = (k + 16u * U32(STEP_PAGE)) & 63u;
         unsigned v = U8(track + LOCK30(s));
         int now = v <= LAST ? (int)v : (int)from_stock(stock);
@@ -144,25 +184,69 @@ void akl_knob(int delta)
     AKL_CALL(void (*)(int, int), 0x4007e998u)(0, delta);
 }
 
+/* ev_arp_setup_knob, encoder D with a step held and an arp note tapped: that step's shift of that note, -7 to +7
+ * steps of the key; 0 removes it. Written as the KEY locks are. */
+static void akl_shift(int delta)
+{
+    unsigned t = U8(UI_TRACK), p = U8(UI_PATTERN);
+    uint32_t bank = U32(UI_BANK);
+    if (order_step < 0 || order_note < 0 || t > 7u || p > 15u || bank < 0x400e21e0u || bank > BANK(15)) return;
+    unsigned s = ((unsigned)order_step + 16u * U32(STEP_PAGE)) & 63u, r;
+    uint32_t at = bank + p * PATTERN + MIDI_TRACK(t) + LOCK31(s);
+    r = U8(at);
+    int k = r != NONE && (int)(r >> 4) == order_note ? (int)((r & 15u) ^ 8u) - 8 : 0;
+    k += delta; k = k < -7 ? -7 : k > 7 ? 7 : k;
+    r = k ? (unsigned)order_note << 4 | ((unsigned)k & 15u) : NONE;
+    U8(at) = (uint8_t)r;
+    U8(CS1_PATTERNS + p * PATTERN + MIDI_TRACK(t) + LOCK31(s)) = (uint8_t)r;
+    gen = (uint8_t)(gen == 255u ? 1u : gen + 1u);
+    AKL_EDITED(bank);
+    AKL_CALL(void (*)(void), 0x40027e00u)();
+    AKL_CALL(void (*)(void), 0x40079d48u)();
+    AKL_CALL(void (*)(int, int), 0x4007e998u)(0, delta);
+}
+
+/* ev_arp_setup_knob: an encoder turned while a trig is held in MIDI mode. 1 when the module took the turn. */
+int akl_turn(unsigned encoder, int delta)
+{
+    track_trigs();
+    if (!U32(MIDI_MODE) || !held_trigs()) return 0;
+    if (encoder == 5u) { show_shift = 0; akl_knob(delta); return 1; }
+    if (encoder == 3u) { show_shift = order_note >= 0; akl_shift(delta); return 1; }
+    return 0;
+}
+
 /* The scale names in stock's three letters, and the roots. */
 static const char names[7][4] = {"MAJ", "DOR", "PHR", "LYD", "MIX", "MIN", "LOC"};
 static const char roots[12][3] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 static void put(volatile char *to, const char *from) { do *to++ = *from; while (*from++); }
 
 /* ev_arp_setup_text's claim: KEY (slot 5) in MIDI mode while a trig is held. */
-int akl_text_claims(unsigned slot) { return slot == 5u && U32(MIDI_MODE) && held_trigs(); }
+int akl_text_claims(unsigned slot) { track_trigs(); return slot == 5u && U32(MIDI_MODE) && held_trigs(); }
 
-/* KEY's text while a trig is held, in stock's layout (the scale at buffer, the root at buffer + 5): the first held
- * step's own lock, OFF, or -- for none. */
+/* KEY's text while a trig is held, in stock's layout (the bottom line at buffer, the top at buffer + 5): with an arp
+ * note tapped or D turned last, its shift on the step (N4 over +1, or -- for none); else the step's own lock, OFF,
+ * or -- for none. */
 void akl_key_text(volatile char *buffer, unsigned value)
 {
-    unsigned held = held_trigs(), t = U8(UI_TRACK), p = U8(UI_PATTERN), k = 0;
+    unsigned t = U8(UI_TRACK), p = U8(UI_PATTERN);
     uint32_t bank = U32(UI_BANK);
     (void)value;
     put(buffer, "");
-    if (!held || t > 7u || p > 15u || bank < 0x400e21e0u || bank > BANK(15)) { put(buffer + 5, "--"); return; }
-    while (!(held >> k & 1u)) ++k;
-    unsigned v = U8(bank + p * PATTERN + MIDI_TRACK(t) + LOCK30((k + 16u * U32(STEP_PAGE)) & 63u));
+    if (order_step < 0 || t > 7u || p > 15u || bank < 0x400e21e0u || bank > BANK(15)) { put(buffer + 5, "--"); return; }
+    uint32_t step = bank + p * PATTERN + MIDI_TRACK(t), s = ((unsigned)order_step + 16u * U32(STEP_PAGE)) & 63u;
+    if (show_shift && order_note >= 0) {
+        unsigned r = U8(step + LOCK31(s));
+        char top[4] = {'N', (char)('1' + order_note % 9), 0, 0}, low[3] = {'-', '-', 0};
+        if (order_note >= 9) { top[1] = '1'; top[2] = (char)('0' + order_note - 9); }
+        if (r != NONE && (int)(r >> 4) == order_note) {
+            int k = (int)((r & 15u) ^ 8u) - 8;
+            low[0] = k < 0 ? '-' : '+'; low[1] = (char)('0' + (k < 0 ? -k : k));
+        }
+        put(buffer + 5, top); put(buffer, low);
+        return;
+    }
+    unsigned v = U8(step + LOCK30(s));
     if (v > LAST) put(buffer + 5, "--");
     else if (!v) put(buffer + 5, "OFF");
     else { put(buffer, names[(v - 1u) % 7u]); put(buffer + 5, roots[(v - 1u) / 7u]); }

@@ -18,6 +18,7 @@ static uint8_t *mem(uintptr_t a)
     if (a >= 0x460d1e00u && a < 0x460d1e10u) return misc + 0x3000 + (a - 0x460d1e00u);
     if (a >= 0x46100b10u && a < 0x46100b20u) return misc + 0x3100 + (a - 0x46100b10u);
     if (a >= 0x46c82450u && a < 0x46c82460u) return misc + 0x4000 + (a - 0x46c82450u);
+    if (a >= 0x46c76d00u && a < 0x46c77c00u) return misc + 0x6000 + (a - 0x46c76d00u);
     if (a >= 0x100f8590u && a < 0x100f85a0u) return misc + 0x5000 + (a - 0x100f8590u);
     return sink;
 }
@@ -102,8 +103,8 @@ int main(void)
     akl_knob(3);
     assert(bank0[TRACK(t) + LOCK30(4)] == 9 && cs1[TRACK(t) + LOCK30(4)] == 9 && edited == 1 && redraws == 1);
     char text[16];
-    assert(akl_text_claims(5) && !akl_text_claims(2));
-    akl_key_text(text, 0); assert(!strcmp(text, "DOR") && !strcmp(text + 5, "C#"));
+    assert(!akl_text_claims(2));
+    assert(akl_text_claims(5)); akl_key_text(text, 0); assert(!strcmp(text, "DOR") && !strcmp(text + 5, "C#"));
     at_step(t, 7); assert(akl_key(t) == 9); /* the edit reaches the cache */
     akl_knob(-9);  /* 9 - 9 = 0: OFF, still a lock */
     assert(bank0[TRACK(t) + LOCK30(4)] == 0);
@@ -120,6 +121,42 @@ int main(void)
     assert(bank0[TRACK(t) + LOCK30(16)] == 7 && bank0[TRACK(t) + LOCK30(31)] == 7);
     *mem(KEY_ROWS) = 0; *mem(KEY_ROWS + 1) = 0;
     assert(!akl_knob_claims());
+
+    /* Moving through a key: C MIN (6) G +1 is G#, +2 A#, -1 F; OFF moves by semitones; the edges hold. */
+    assert(akl_move(67, 6, 1) == 68 && akl_move(67, 6, 2) == 70 && akl_move(67, 6, -1) == 65 && akl_move(67, 0, 1) == 68);
+    assert(akl_move(127, 1, 3) == 127 && akl_move(0, 1, -3) == 0 && akl_move(66, 6, 0) == 65);
+
+    /* The gesture on track 6: hold trig 9 (the step), tap trig 4 (the arp note), turn D. */
+    t = 5;
+    memset(bank0 + MIDI_TRACK(t), 0xff, 0x8b0u); memset(cs1 + MIDI_TRACK(t), 0xff, 0x8b0u);
+    bank0[TRACK(t) + 0x28] = 16;
+    *mem(UI_TRACK) = (uint8_t)t; set32(STEP_PAGE, 0); bank0[PART_KEY(t)] = 2;
+    *mem(KEY_ROWS) = 0; *mem(KEY_ROWS + 1) = 1;            /* trig 9 */
+    assert(akl_text_claims(5));
+    *mem(KEY_ROWS) = 1 << 3;                                /* + trig 4 */
+    assert(akl_text_claims(5));
+    *mem(KEY_ROWS) = 0;                                     /* trig 4 let go, trig 9 still held */
+    assert(akl_text_claims(5));
+    assert(akl_turn(3, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x31 && cs1[TRACK(t) + LOCK31(8)] == 0x31);
+    akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "+1"));
+    assert(akl_turn(3, -3) && bank0[TRACK(t) + LOCK31(8)] == 0x3e);   /* -2 */
+    akl_key_text(text, 0); assert(!strcmp(text, "-2"));
+    assert(akl_turn(5, 1) && bank0[TRACK(t) + LOCK30(8)] == 7 && bank0[TRACK(t) + LOCK30(3)] == NONE); /* KEY: the step only */
+    akl_key_text(text, 0); assert(!strcmp(text, "LOC") && !strcmp(text + 5, "C")); /* KEY shown: C LOC (7) */
+    assert(akl_turn(3, 0)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N4"));                        /* D: the shift again */
+    assert(!akl_turn(2, 1) && !akl_turn(6, 1));            /* LEN and the note editor stay stock's */
+    assert(akl_turn(3, 2) && bank0[TRACK(t) + LOCK31(8)] == NONE);    /* back to 0: no shift */
+    assert(akl_turn(3, 1));
+    *mem(KEY_ROWS + 1) = 0; assert(akl_text_claims(5) == 0 && !akl_turn(3, 1)); /* nothing held: stock's */
+
+    /* Playing: step 9, the arp on (MODE), LEN 4 (setup +0x0e is 3), sending its 4th note (its place 3). */
+    *mem(ARP_MODE(t)) = 1; *mem(LIVE_KEY(t) - 0x11 + 0x0e) = 3; *mem(LIVE_KEY(t)) = 2; /* track KEY C MIN */
+    bank0[TRACK(t) + LOCK30(8)] = NONE; gen++;
+    at_step(t, 8); *mem(ARP_POS(t)) = 3;
+    note = 67; assert(akl_claims(t) && akl_note(t, &note) && note == 68);   /* G +1 in C MIN: G# */
+    *mem(ARP_POS(t)) = 0; note = 67; assert(!akl_claims(t) && !akl_note(t, &note) && note == 67); /* the 1st note: stock */
+    *mem(ARP_MODE(t)) = 0; *mem(ARP_POS(t)) = 3; assert(!akl_claims(t));   /* arp off: no shift */
+    *mem(ARP_MODE(t)) = 1; at_step(t, 9); assert(!akl_claims(t));          /* the next step: none */
 
     puts("test_akl: ok");
     return 0;

@@ -27,19 +27,16 @@ akl_note_entry:
 2:      jmp     0x4009fb5e
 
 | 0x4007a2ec (ev_arp_setup_knob), the entry of MIDI ARP SETUP's encoder handler (encoder, delta), 4(%sp) and 8(%sp);
-| d0-d1/a0-a1 are free there, as at any C call. KEY (5) in MIDI mode with a trig held stores step locks and returns
-| to the caller; every other turn runs stock's handler from its first instruction, the two the site held.
+| d0-d1/a0-a1 are free there, as at any C call. akl_turn takes KEY (5) and D (3) while a trig is held in MIDI mode and
+| the caller gets its return; every other turn runs stock's handler from its first instruction, the two the site held.
         .globl  akl_knob_entry
 akl_knob_entry:
-        moveq   #5,%d0
-        cmp.l   4(%sp),%d0
-        bne.s   3f
-        jsr     akl_knob_claims
+        move.l  8(%sp),-(%sp)             | the delta
+        move.l  8(%sp),-(%sp)             | the encoder, 4(%sp) at entry
+        jsr     akl_turn
+        addq.l  #8,%sp
         tst.l   %d0
         beq.s   3f
-        move.l  8(%sp),-(%sp)
-        jsr     akl_knob
-        addq.l  #4,%sp
         rts
 3:      lea     -36(%sp),%sp              | stock's own prologue, as the site held it
         movem.l %d2-%d7/%a2-%a4,(%sp)

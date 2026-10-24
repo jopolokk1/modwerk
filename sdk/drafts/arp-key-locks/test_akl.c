@@ -129,6 +129,7 @@ int main(void)
     /* The gesture on track 6: hold trig 9 (the step), D picks the arp note, E shifts it. */
     t = 5;
     memset(bank0 + MIDI_TRACK(t), 0xff, 0x8b0u); memset(cs1 + MIDI_TRACK(t), 0xff, 0x8b0u);
+    memset(bank0 + MIDI_TRACK(t), 0, 24);                   /* no trigs yet (the masks) */
     bank0[TRACK(t) + 0x28] = 16;
     *mem(UI_TRACK) = (uint8_t)t; set32(STEP_PAGE, 0); bank0[PART_KEY(t)] = 2;
     *mem(KEY_ROWS) = 0; *mem(KEY_ROWS + 1) = 1;            /* trig 9 */
@@ -164,6 +165,12 @@ int main(void)
     *mem(ARP_POS(t)) = 0; note = 67; assert(!akl_claims(t) && !akl_note(t, &note) && note == 67); /* the 1st note: stock */
     *mem(ARP_MODE(t)) = 0; *mem(ARP_POS(t)) = 3; assert(!akl_claims(t));   /* arp off: no shift */
     *mem(ARP_MODE(t)) = 1; at_step(t, 11); *mem(ARP_POS(t)) = 3; assert(akl_claims(t)); /* held on later steps */
+    bank0[TRACK(t) + 7] |= 1u << 0; bank0[TRACK(t) + 6] |= 1u << 0;      /* trigs on steps 1 and 9 */
+    gen++; at_step(t, 11); assert(akl_claims(t));                           /* step 9's trig carries the shift */
+    at_step(t, 2); assert(!akl_claims(t));                                  /* trig 1 has none: normal */
+    bank0[TRACK(t) + 5] |= 1u << 3; gen++;                                  /* a trig on step 20 */
+    at_step(t, 2); assert(!akl_claims(t));
+    bank0[TRACK(t) + 7] = bank0[TRACK(t) + 6] = bank0[TRACK(t) + 5] = 0; gen++;
     bank0[TRACK(t) + LOCK31(12)] = 0x30; gen++;                             /* step 13: back to normal */
     at_step(t, 13); assert(!akl_claims(t));
     at_step(t, 2); assert(!akl_claims(t));                                  /* wraps: step 13's 0 holds round */

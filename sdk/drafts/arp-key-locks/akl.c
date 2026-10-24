@@ -22,7 +22,7 @@
 #define CS1_PATTERNS 0x1001614eu                        /* the current bank's patterns, battery-backed */
 #define PLAY_BANK 0x800065bdu                           /* the bank and pattern the sequencer plays */
 #define PLAY_PATTERN 0x800065beu
-#define STEP(t) (0x800064d0u + 8u + (t))                /* MIDI track t's step, wrapped at its length */
+#define STEP(t) (0x800064e0u + 8u + (t))                /* MIDI track t's step as it plays (0x800064d0 is the next one, prepared ahead) */
 #define UI_BANK 0x46c82456u                             /* the bank RAM the UI edits */
 #define UI_TRACK 0x100b14ccu
 #define UI_PATTERN 0x100b14d0u
@@ -63,8 +63,8 @@ static unsigned length(uint32_t pattern, uint32_t track)
     return n < 1u ? 1u : n > 64u ? 64u : n;
 }
 
-/* The setting that holds on step s in the step's lock byte at offset b (30: key, 31: arp note shift): the nearest
- * at or before it, wrapping at the length; NONE without any. */
+/* The key that holds on step s (lock byte 30): the nearest lock at or before it, wrapping at the length; NONE
+ * without any. */
 static unsigned held_from(uint32_t track, unsigned s, unsigned n, unsigned b)
 {
     uint32_t at = track + 0x30u + 32u * s + b, first = track + 0x30u + b, last = track + 0x30u + 32u * (n - 1u) + b;
@@ -72,6 +72,21 @@ static unsigned held_from(uint32_t track, unsigned s, unsigned n, unsigned b)
         unsigned v = U8(at);
         if (b == 30u ? v <= LAST : v != NONE) return v;
         at = at == first ? last : at - 32u;
+    }
+    return NONE;
+}
+
+/* The arp note shift that holds on step s (lock byte 31): a shift belongs to its trig, so it holds until the next
+ * step with a trig or a shift of its own. Backwards from s, wrapping at the length: the first step with a shift
+ * gives it, and a trig before that ends it (NONE: the arp's own notes). The note trigs are the track's first mask
+ * (+0, 64 bits, high byte first). */
+static unsigned held_shift(uint32_t track, unsigned s, unsigned n)
+{
+    for (unsigned k = n; k; --k) {
+        unsigned v = U8(track + LOCK31(s));
+        if (v != NONE) return v;
+        if (U8(track + 7u - s / 8u) >> (s % 8u) & 1u) return NONE;
+        s = s ? s - 1u : n - 1u;
     }
     return NONE;
 }
@@ -91,7 +106,7 @@ unsigned akl_key(unsigned t)
         uint32_t pattern = BANK(b) + p * PATTERN, track = pattern + MIDI_TRACK(t);
         unsigned n = length(pattern, track);
         cache_key[t] = (uint8_t)held_from(track, s % n, n, 30u);
-        cache_shift[t] = (uint8_t)held_from(track, s % n, n, 31u); /* a shift holds until the next one, as a key */
+        cache_shift[t] = (uint8_t)held_shift(track, s % n, n); /* a shift holds until the next trig */
         cache_for[t] = want;
     }
     return cache_key[t];
@@ -220,7 +235,7 @@ static void store_shift(uint32_t at, unsigned r)
 }
 
 /* Encoder E with a step held: the step's shift of the note D picked, -7 to +7 steps of the key, held until the next
- * step with one; 0 ends a shift there. Written as the KEY locks are. */
+ * trig or step with one; 0 ends a shift there. Written as the KEY locks are. */
 static void akl_shift(int delta)
 {
     uint32_t at = shift_at();

@@ -19,6 +19,7 @@ static uint8_t *mem(uintptr_t a)
     if (a >= 0x46100b10u && a < 0x46100b20u) return misc + 0x3100 + (a - 0x46100b10u);
     if (a >= 0x46c82450u && a < 0x46c82460u) return misc + 0x4000 + (a - 0x46c82450u);
     if (a >= 0x46c76d00u && a < 0x46c77c00u) return misc + 0x6000 + (a - 0x46c76d00u);
+    if (a >= 0x46c7a000u && a < 0x46c7a100u) return misc + 0x7000 + (a - 0x46c7a000u);
     if (a >= 0x100f8590u && a < 0x100f85a0u) return misc + 0x5000 + (a - 0x100f8590u);
     return sink;
 }
@@ -47,7 +48,7 @@ int main(void)
 {
     memset(bank0 + MIDI_TRACK(0), 0xff, 8 * 0x8b0u);
     for (unsigned t = 0; t < 8; ++t) bank0[TRACK(t) + 0x28] = 16;
-    bank0[0x8e51] = 16;
+    bank0[0x8e53] = 16;                                     /* the pattern length (normal mode) */
     set32(UI_BANK, 0x400e21e0u);
 
     /* snap: C MAJOR (1) lowers C# to C and keeps D; F DORIAN (1 + 7*5 + 1 = 37): F G Ab Bb C D Eb. */
@@ -157,25 +158,32 @@ int main(void)
     akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "+1"));
     *mem(KEY_ROWS + 1) = 0; akl_text_claims(5);
 
-    /* Playing: step 9, the arp on (MODE), LEN 4 (setup +0x0e is 3), sending its 4th note (its place 3). */
-    *mem(ARP_MODE(t)) = 1; *mem(LIVE_KEY(t) - 0x11 + 0x0e) = 3; *mem(LIVE_KEY(t)) = 2; /* track KEY C MIN */
+    /* Playing, track 6: trigs on steps 1 and 9, the arp on (MODE), LEN 4 (setup +0x0e is 3), track KEY C MIN. */
+    memset(mem(FIRED(t)), 0xff, 32);
+    bank0[0x8e53] = 16;
+    *mem(ARP_MODE(t)) = 1; *mem(LIVE_KEY(t) - 0x11 + 0x0e) = 3; *mem(LIVE_KEY(t)) = 2;
     bank0[TRACK(t) + LOCK30(8)] = NONE; gen++;
+    bank0[TRACK(t) + 7] = 1; bank0[TRACK(t) + 6] = 1;      /* note trigs on steps 1 and 9 */
+    /* Step 9's own setting (note 4 +1, stored above): its 4th note moves, the 1st does not, and it holds after. */
     at_step(t, 8); *mem(ARP_POS(t)) = 3;
     note = 67; assert(akl_claims(t) && akl_note(t, &note) && note == 68);   /* G +1 in C MIN: G# */
-    *mem(ARP_POS(t)) = 0; note = 67; assert(!akl_claims(t) && !akl_note(t, &note) && note == 67); /* the 1st note: stock */
+    *mem(ARP_POS(t)) = 0; note = 67; assert(!akl_claims(t) && !akl_note(t, &note) && note == 67);
     *mem(ARP_MODE(t)) = 0; *mem(ARP_POS(t)) = 3; assert(!akl_claims(t));   /* arp off: no shift */
-    *mem(ARP_MODE(t)) = 1; at_step(t, 11); *mem(ARP_POS(t)) = 3; assert(akl_claims(t)); /* held on later steps */
-    bank0[TRACK(t) + 7] |= 1u << 0; bank0[TRACK(t) + 6] |= 1u << 0;      /* trigs on steps 1 and 9 */
-    gen++; at_step(t, 11); assert(akl_claims(t));                           /* step 9's trig carries the shift */
-    at_step(t, 2); assert(!akl_claims(t));                                  /* trig 1 has none: normal */
-    bank0[TRACK(t) + 5] |= 1u << 3; gen++;                                  /* a trig on step 20 */
-    at_step(t, 2); assert(!akl_claims(t));
-    bank0[TRACK(t) + 7] = bank0[TRACK(t) + 6] = bank0[TRACK(t) + 5] = 0; gen++;
-    bank0[TRACK(t) + LOCK31(12)] = 0x30; gen++;                             /* step 13: back to normal */
-    at_step(t, 13); assert(!akl_claims(t));
-    at_step(t, 2); assert(!akl_claims(t));                                  /* wraps: step 13's 0 holds round */
-    bank0[TRACK(t) + LOCK31(12)] = NONE; gen++;
-    at_step(t, 2); assert(akl_claims(t));                                   /* without it step 9's +1 wraps round */
+    *mem(ARP_MODE(t)) = 1; at_step(t, 13); assert(akl_claims(t));          /* held on later steps */
+    at_step(t, 0); assert(!akl_claims(t));                                  /* trig 1, no setting: normal */
+    at_step(t, 5); assert(!akl_claims(t));
+    /* A trigless trig on step 10 with a condition: only when stock fires it (its record carries the setting). */
+    bank0[TRACK(t) + LOCK31(8)] = NONE; bank0[TRACK(t) + LOCK31(9)] = 0x31; gen++;
+    at_step(t, 8); assert(!akl_claims(t));                                  /* trig 9 itself: normal */
+    mem(FIRED(t))[31] = 0x31;                                               /* the trigless one is coming and fires */
+    assert(akl_claims(t)); note = 67; assert(akl_note(t, &note) && note == 68);
+    at_step(t, 9); mem(FIRED(t))[31] = NONE; assert(akl_claims(t));         /* holds after it */
+    at_step(t, 0); assert(!akl_claims(t));                                  /* the next note trig: normal */
+    at_step(t, 8); assert(!akl_claims(t));                                  /* a loop where it does not fire */
+    at_step(t, 9); assert(!akl_claims(t));
+    /* A record ahead of a note trig does not count early: step 9 coming, step 8 playing. */
+    at_step(t, 7); mem(FIRED(t))[31] = 0x31; assert(!akl_claims(t));
+    mem(FIRED(t))[31] = NONE;
 
     puts("test_akl: ok");
     return 0;

@@ -19,6 +19,8 @@
 #define ARP_POS(t) (0x46c77b17u + 10u * (t))            /* MIDI track t's arpeggiator: its place in the note sequence (0..LEN) */
 #define ARP_MODE(t) (0x46c76fe0u + 32u * (t) + 14u)     /* its MODE as it plays (locks applied), 0 OFF */
 #define LIVE_KEY(t) (0x46c76df1u + 0x44u * (t))         /* the track's KEY as it plays */
+#define FIRED(t) (0x46c7a000u + 32u * (t))              /* the lock bytes of track t's trig stock fires next or now: only
+                                                           when its condition passes; 0xff without a trig */
 #define CS1_PATTERNS 0x1001614eu                        /* the current bank's patterns, battery-backed */
 #define PLAY_BANK 0x800065bdu                           /* the bank and pattern the sequencer plays */
 #define PLAY_PATTERN 0x800065beu
@@ -56,10 +58,11 @@ int akl_snap(int note, unsigned key)
     return modes[mode] >> degree & 1u ? note : note - 1;
 }
 
-/* The track's length in steps: its own in per-track mode, else the pattern's. */
+/* The track's length in steps: its own in per-track mode (+0x8e55 set), else the pattern's (+0x8e53; the emulator's
+ * 16-step loop follows it, not +0x8e51). */
 static unsigned length(uint32_t pattern, uint32_t track)
 {
-    unsigned n = U8(pattern + 0x8e55u) ? U8(track + 0x28u) : U8(pattern + 0x8e51u);
+    unsigned n = U8(pattern + 0x8e55u) ? U8(track + 0x28u) : U8(pattern + 0x8e53u);
     return n < 1u ? 1u : n > 64u ? 64u : n;
 }
 
@@ -76,24 +79,15 @@ static unsigned held_from(uint32_t track, unsigned s, unsigned n, unsigned b)
     return NONE;
 }
 
-/* The arp note shift that holds on step s (lock byte 31): a shift belongs to its trig, so it holds until the next
- * step with a trig or a shift of its own. Backwards from s, wrapping at the length: the first step with a shift
- * gives it, and a trig before that ends it (NONE: the arp's own notes). The note trigs are the track's first mask
- * (+0, 64 bits, high byte first). */
-static unsigned held_shift(uint32_t track, unsigned s, unsigned n)
-{
-    for (unsigned k = n; k; --k) {
-        unsigned v = U8(track + LOCK31(s));
-        if (v != NONE) return v;
-        if (U8(track + 7u - s / 8u) >> (s % 8u) & 1u) return NONE;
-        s = s ? s - 1u : n - 1u;
-    }
-    return NONE;
-}
-
 /* Per MIDI track, the last answer and what it was for: one scan per step, not per note. A lock edit bumps gen. */
 static uint32_t cache_for[8];
-static uint8_t cache_key[8], cache_shift[8];
+static uint8_t cache_key[8];
+/* Per MIDI track, the arp note shift in force and the step it was last brought up to date on: a note trig sets it
+ * to its own setting (or none), a fired trig or trigless trig carrying one sets it (as stock applies a lock), and it
+ * holds until the next note trig. */
+static uint8_t shift_now_r[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+static uint8_t shift_step[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+static uint32_t shift_track[8];
 static uint8_t gen = 1;
 
 unsigned akl_key(unsigned t)
@@ -106,8 +100,22 @@ unsigned akl_key(unsigned t)
         uint32_t pattern = BANK(b) + p * PATTERN, track = pattern + MIDI_TRACK(t);
         unsigned n = length(pattern, track);
         cache_key[t] = (uint8_t)held_from(track, s % n, n, 30u);
-        cache_shift[t] = (uint8_t)held_shift(track, s % n, n); /* a shift holds until the next trig */
         cache_for[t] = want;
+        shift_track[t] = track;
+    }
+    /* The shift: a new step with a note trig (the track's first mask, 64 bits, high byte first) starts from that
+     * trig's own setting; a fired record carrying one switches it on. Stock fills that record a little ahead of its
+     * step, so it counts only while the next step has no note trig: it is then a trigless trig's (or this step's). */
+    uint32_t tr = shift_track[t];
+    unsigned n = length(BANK(b) + p * PATTERN, tr), next;
+    s %= n; next = (s + 1u) % n;
+    if (s != shift_step[t]) {
+        shift_step[t] = (uint8_t)s;
+        if (U8(tr + 7u - s / 8u) >> (s % 8u) & 1u) shift_now_r[t] = U8(tr + LOCK31(s));
+    }
+    if (!(U8(tr + 7u - next / 8u) >> (next % 8u) & 1u)) {
+        unsigned r = U8(FIRED(t) + 31u);
+        if (r != NONE) shift_now_r[t] = (uint8_t)r;
     }
     return cache_key[t];
 }
@@ -140,7 +148,7 @@ static void track_trigs(void)
  * note is sent the arp's place is that note's own (emulator, calibrated against stock's arp). */
 static unsigned shift_now(unsigned t)
 {
-    unsigned r = cache_shift[t];
+    unsigned r = shift_now_r[t];
     if (r == NONE || !(r & 15u) || !U8(ARP_MODE(t))) return NONE; /* 0: back to the arp's own note */
     unsigned pos = U8(ARP_POS(t)), n = U8(LIVE_KEY(t) - 0x11u + 0x0eu) + 1u; /* the arp's LEN, setup +0x0e, 0-15 */
     return n && pos % n == (r >> 4) ? r : NONE;

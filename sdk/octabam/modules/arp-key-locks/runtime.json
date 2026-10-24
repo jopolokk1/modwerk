@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "subscribe": [
+    { "event": "ev_midi_note_key", "fn": "akl_take_note_key", "order": 50, "replaces": "akl_note_entry" },
+    { "event": "ev_arp_setup_knob", "fn": "akl_take_arp_knob", "order": 50, "replaces": "akl_knob_entry" }
+  ]
+}

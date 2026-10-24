@@ -178,6 +178,12 @@
    "event": "ev_arp_setup_knob",
    "kind": "take",
    "room": 8
+  },
+  {
+   "index": 34,
+   "event": "ev_arp_setup_text",
+   "kind": "take",
+   "room": 8
   }
  ]
 }

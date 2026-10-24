@@ -366,6 +366,20 @@
     "jmp 0x4007a2f4"
    ],
    "done": null
+  },
+  {
+   "site": "0x4007a1ec",
+   "length": 6,
+   "guard": "5a5d9a451cef368d61badb2d5212624df56beca30e3fcaa6483f0c42a35a92ee",
+   "routine": "MIDI ARP SETUP's drawer 0x40079d48, its loop over the setup slots, about to draw a value (LEN or KEY): d3 the slot (2 LEN, 5 KEY), d4 the track's byte, a3 the slot's descriptor (a3@ its text function f(buffer, value), a3@(48) its drawer or 0 for 0x400479b4), a2 + 53 and d2 + 29 the place, d6 the surface; stock calls drawer(a2 + 53, d2 + 29, d3, d4, 0, a3@, d6) at 0x4007a1fa and goes on at 0x4007a216",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4007a1f2"
+   ],
+   "done": null
   }
  ],
  "events": [
@@ -1649,6 +1663,22 @@
    "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
    "subscribers": [],
    "orderEvidence": "No module subscribes yet. A module that locks KEY per step claims only encoder 5 while a trig is held, and leaves every other turn to stock. Upstream octabam's MIDI Scales patches KEY's branch here (0x4007a3e2) for its extra modes; a port would take this event instead."
+  },
+  {
+   "event": "ev_arp_setup_text",
+   "index": 34,
+   "kind": "take",
+   "site": "0x4007a1ec",
+   "length": 6,
+   "entry": "jmp",
+   "arg": "d3",
+   "room": 8,
+   "when": "MIDI ARP SETUP is about to draw a setup value (d3 the slot: 2 LEN, 5 KEY)",
+   "context": "the UI task (the drawer): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site: d3 the slot, d4 the track's value, a3 the slot's descriptor (a3@ the text function f(buffer, value), a3@(48) the drawer or 0 for 0x400479b4), a2 and d2 the place, d6 the surface. It draws the value itself, normally by calling the slot's drawer as stock does with a text function of its own, and goes on at 0x4007a216 with every register but d0-d1/a0-a1 as it found them; or it hands the value to stock by replaying the stock tail below. It must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [],
+   "orderEvidence": "No module subscribes yet. A module that shows a held trig's KEY lock claims slot 5 only while a trig is held, and leaves every other draw to stock. Upstream octabam's MIDI Scales replaces KEY's text function (0x400d40c6) for its extra modes; a port would take this event instead."
   }
  ]
 }

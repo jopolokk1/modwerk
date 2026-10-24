@@ -20,6 +20,8 @@ static uint8_t *mem(uintptr_t a)
     if (a >= 0x46c82450u && a < 0x46c82460u) return misc + 0x4000 + (a - 0x46c82450u);
     if (a >= 0x46c76d00u && a < 0x46c77c00u) return misc + 0x6000 + (a - 0x46c76d00u);
     if (a >= 0x46c7a000u && a < 0x46c7a100u) return misc + 0x7000 + (a - 0x46c7a000u);
+    if (a >= 0x400cfeb0u && a < 0x400cfed0u) return misc + 0x7100 + (a - 0x400cfeb0u);
+    if (a >= 0x46c7c720u && a < 0x46c7c730u) return misc + 0x7200 + (a - 0x46c7c720u);
     if (a >= 0x100f8590u && a < 0x100f85a0u) return misc + 0x5000 + (a - 0x100f8590u);
     return sink;
 }
@@ -29,15 +31,18 @@ static void stamp(void) { edited++; }
 static int redraws;
 static void redraw(void) { redraws++; }
 static void tail(int a, int b) { (void)a; (void)b; }
+static int closes;
+static void close_setup(void) { closes++; }
 static void (*akl_stub(uintptr_t a))(void)
 {
-    return a == 0x40027e00u ? stamp : a == 0x40079d48u ? redraw : (void (*)(void))tail;
+    return a == 0x40027e00u ? stamp : a == 0x40079d48u ? redraw : a == 0x40079abcu ? close_setup : (void (*)(void))tail;
 }
 #define AKL_HOST
 #define U8(a) (*mem((uintptr_t)(a)))
 #define U32(a) be32((uintptr_t)(a))
 #define AKL_CALL(type, a) ((type)akl_stub(a))
 #define AKL_EDITED(bank) (set32((bank) + 0x9b332u, 1), set32(0x100f8598u, 1))
+#define AKL_DIRTY() set32(0x46c7c72cu, 1)
 #include "akl.c"
 
 #define TRACK(t) (MIDI_TRACK(t))
@@ -184,6 +189,15 @@ int main(void)
     /* A record ahead of a note trig does not count early: step 9 coming, step 8 playing. */
     at_step(t, 7); mem(FIRED(t))[31] = 0x31; assert(!akl_claims(t));
     mem(FIRED(t))[31] = NONE;
+
+    /* Close on release: after an edit with a trig held, letting go closes ARP SETUP (stock's close, then a redraw). */
+    set32(0x400cfebeu, 0x46c7d34cu); set32(MIDI_MODE, 1); redraws = 0;
+    *mem(KEY_ROWS + 1) = 1; akl_text_claims(5); assert(akl_turn(4, 1));
+    int before = redraws; akl_tick(0); assert(redraws == before);           /* still held: nothing */
+    *mem(KEY_ROWS + 1) = 0; akl_tick(0); assert(closes == 1);               /* let go: closed */
+    akl_tick(0); assert(closes == 1);                                       /* once */
+    *mem(KEY_ROWS + 1) = 1; akl_text_claims(5); *mem(KEY_ROWS + 1) = 0; akl_text_claims(5);
+    akl_tick(0); assert(closes == 1);                                       /* a tap alone: stays open */
 
     puts("test_akl: ok");
     return 0;

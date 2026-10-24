@@ -9,6 +9,7 @@
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
 #define AKL_CALL(type, a) ((type)(uintptr_t)(a))
 #define AKL_EDITED(bank) (U32((bank) + 0x9b332u) = 1, U32(0x100f8598u) = 1)
+#define AKL_DIRTY() (U32(0x46c7c72cu) = 1) /* the screen to flush */
 #endif
 
 #define BANK(b) (0x400e21e0u + (uint32_t)(b) * 0x9b340u) /* a bank's RAM */
@@ -271,15 +272,33 @@ static void akl_pick(int delta)
 }
 
 /* ev_arp_setup_knob: an encoder turned while a trig is held in MIDI mode. F (5) locks the key, D (3) picks the arp
- * note, E (4) shifts it. 1 when the module took the turn. */
+ * note, E (4) shifts it. 1 when the module took the turn. An edit marks ARP SETUP to close when the trigs are let go
+ * (akl_tick), back to the page that shows the pattern's trigs. */
+static int close_on_release;
 int akl_turn(unsigned encoder, int delta)
 {
     track_trigs();
     if (!U32(MIDI_MODE) || !held_trigs()) return 0;
-    if (encoder == 5u) { show_shift = 0; akl_knob(delta); return 1; }
-    if (encoder == 3u) { show_shift = 1; akl_pick(delta); return 1; }
-    if (encoder == 4u) { show_shift = 1; akl_shift(delta); return 1; }
+    if (encoder == 5u) { show_shift = 0; close_on_release = 1; akl_knob(delta); return 1; }
+    if (encoder == 3u) { show_shift = 1; close_on_release = 1; akl_pick(delta); return 1; }
+    if (encoder == 4u) { show_shift = 1; close_on_release = 1; akl_shift(delta); return 1; }
     return 0;
+}
+
+#define ARP_SETUP_OPEN 0x400cfebeu /* MIDI ARP SETUP's window, 0 while closed */
+/* module_tick (the base's UI tick, over USB; card builds have none and leave ARP SETUP open, as stock): after an
+ * edit with a trig held, letting go of every trig closes ARP SETUP with stock's own close (0x40079abc, the UI task's,
+ * as its window table calls it) and redraws the page, as stock's FUNC + AMP does. Tapping trigs alone, stock's arp
+ * step switches, never closes it. */
+void akl_tick(void *api)
+{
+    (void)api;
+    if (!close_on_release || held_trigs()) return;
+    close_on_release = 0;
+    if (!U32(ARP_SETUP_OPEN) || !U32(MIDI_MODE)) return;
+    AKL_CALL(void (*)(void), 0x40079abcu)();
+    AKL_CALL(void (*)(int), 0x4004d948u)(-1);
+    AKL_DIRTY();
 }
 
 /* The scale names in stock's three letters, and the roots. */

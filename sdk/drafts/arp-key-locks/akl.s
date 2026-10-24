@@ -1087,6 +1087,7 @@ akl_turn:
 .L247:
 	move.l 16(%sp),-(%sp)
 	clr.l show_shift
+	mov3q.l #1,close_on_release
 	jsr akl_knob
 	addq.l #4,%sp
 .L217:
@@ -1097,6 +1098,7 @@ akl_turn:
 	rts
 .L249:
 	mov3q.l #1,show_shift
+	mov3q.l #1,close_on_release
 	jsr shift_at
 	move.l %d0,%a0
 	tst.l %d0
@@ -1153,6 +1155,7 @@ akl_turn:
 	move.l order_note,%d0
 	mov3q.l #-1,%d2
 	mov3q.l #1,show_shift
+	mov3q.l #1,close_on_release
 	cmp.l %d0,%d2
 	jeq .L253
 	moveq #-2,%d1
@@ -1236,19 +1239,44 @@ akl_turn:
 	jra .L256
 	.size	akl_turn, .-akl_turn
 	.align	2
+	.globl	akl_tick
+	.type	akl_tick, @function
+akl_tick:
+	tst.l close_on_release
+	jeq .L257
+	move.b 1175456536,%d1
+	mvz.b 1175456537,%d0
+	lsl.l #8,%d0
+	mvz.b %d1,%d1
+	or.l %d1,%d0
+	jne .L257
+	clr.l close_on_release
+	tst.l 1074593470
+	jeq .L257
+	tst.l -2147483630
+	jeq .L257
+	jsr 1074240188
+	mov3q.l #-1,-(%sp)
+	jsr 1074059592
+	mov3q.l #1,1187497772
+	addq.l #4,%sp
+.L257:
+	rts
+	.size	akl_tick, .-akl_tick
+	.align	2
 	.globl	akl_text_claims
 	.type	akl_text_claims, @function
 akl_text_claims:
 	jsr track_trigs
 	mov3q.l #5,%d0
 	cmp.l 4(%sp),%d0
-	jeq .L258
-.L260:
+	jeq .L268
+.L270:
 	clr.l %d0
 	rts
-.L258:
+.L268:
 	tst.l -2147483630
-	jeq .L260
+	jeq .L270
 	move.b 1175456536,%d1
 	mvz.b 1175456537,%d0
 	lsl.l #8,%d0
@@ -1277,19 +1305,19 @@ akl_key_text:
 	move.b %d0,20(%sp)
 	move.l order_step,%d0
 	tst.l %d0
-	jlt .L292
+	jlt .L302
 	mvz.b %d1,%d2
 	mov3q.l #7,%d3
 	cmp.l %d2,%d3
-	jcs .L292
+	jcs .L302
 	mvz.b 20(%sp),%d4
 	moveq #15,%d2
 	cmp.l %d4,%d2
-	jcs .L292
+	jcs .L302
 	move.l #-1074668000,%a6
 	add.l %a1,%a6
 	cmp.l #9535680,%a6
-	jhi .L292
+	jhi .L302
 	move.b 20(%sp),%d3
 	move.l 1175264772,%d2
 	ext.w %d1
@@ -1306,35 +1334,35 @@ akl_key_text:
 	moveq #63,%d1
 	and.l %d1,%d0
 	tst.l show_shift
-	jeq .L270
+	jeq .L280
 	move.l order_note,%d1
 	moveq #-2,%d2
 	cmp.l %d1,%d2
-	jeq .L292
+	jeq .L302
 	tst.l %d1
-	jge .L297
-.L270:
+	jge .L307
+.L280:
 	lsl.l #5,%d0
 	moveq #84,%d1
 	mvz.b 78(%a6,%d0.l),%d0
 	cmp.l %d0,%d1
-	jcs .L298
+	jcs .L308
 	tst.l %d0
-	jne .L280
+	jne .L290
 	move.l %a0,%d0
 	add.l #9,%d0
 	lea .LC0,%a6
-.L281:
+.L291:
 	move.l %a1,%a0
 	addq.l #1,%a1
 	move.b (%a6)+,(%a0)
 	cmp.l %d0,%a1
-	jne .L281
-.L266:
+	jne .L291
+.L276:
 	movem.l (%sp),#17436
 	lea (36,%sp),%sp
 	rts
-.L292:
+.L302:
 	moveq #45,%d3
 	clr.b %d4
 	move.b %d3,5(%a0)
@@ -1343,7 +1371,7 @@ akl_key_text:
 	movem.l (%sp),#17436
 	lea (36,%sp),%sp
 	rts
-.L298:
+.L308:
 	moveq #45,%d2
 	clr.b %d3
 	move.b %d2,5(%a0)
@@ -1352,7 +1380,7 @@ akl_key_text:
 	movem.l (%sp),#17436
 	lea (36,%sp),%sp
 	rts
-.L297:
+.L307:
 	moveq #9,%d3
 	move.l %d1,%d2
 	rems.l %d3,%d4:%d2
@@ -1373,24 +1401,24 @@ akl_key_text:
 	move.b %d2,30(%sp)
 	move.l %d3,%a6
 	cmp.l %d1,%d4
-	jge .L272
+	jge .L282
 	moveq #49,%d2
 	move.l %d1,%d3
 	add.l #39,%d3
 	move.l %d3,20(%sp)
 	move.b 23(%sp),34(%sp)
 	move.b %d2,33(%sp)
-.L272:
+.L282:
 	cmp.l #255,%a6
-	jeq .L273
+	jeq .L283
 	move.l %a6,%d4
 	lsr.l #4,%d4
 	cmp.l %d1,%d4
-	jeq .L299
-.L273:
+	jeq .L309
+.L283:
 	move.l %sp,%d0
 	add.l #32,%d0
-.L277:
+.L287:
 	move.l %d0,%a2
 	addq.l #1,%a2
 	move.b -1(%a2),(%a1)
@@ -1398,19 +1426,19 @@ akl_key_text:
 	addq.l #1,%a1
 	subq.l #1,%a2
 	tst.b (%a2)+
-	jne .L277
+	jne .L287
 	lea (28,%sp),%a6
-.L278:
+.L288:
 	move.b (%a6),(%a0)
 	addq.l #1,%a0
 	tst.b (%a6)+
-	jeq .L266
+	jeq .L276
 	move.b (%a6),(%a0)
 	addq.l #1,%a0
 	tst.b (%a6)+
-	jne .L278
-	jra .L266
-.L299:
+	jne .L288
+	jra .L276
+.L309:
 	moveq #15,%d1
 	moveq #8,%d2
 	and.l %d1,%d0
@@ -1420,13 +1448,13 @@ akl_key_text:
 	move.l %d1,%d0
 	subq.l #8,%a6
 	cmp.l %d1,%d2
-	jne .L274
+	jne .L284
 	move.w #12288,%d3
 	move.l %sp,%d0
 	add.l #32,%d0
 	move.w %d3,28(%sp)
-	jra .L277
-.L280:
+	jra .L287
+.L290:
 	subq.l #1,%d0
 	move.l %d0,20(%sp)
 	mov3q.l #7,%d4
@@ -1434,54 +1462,54 @@ akl_key_text:
 	lsl.l #2,%d1
 	move.l %d1,%d0
 	add.l #names,%d0
-.L282:
+.L292:
 	move.l %d0,%a2
 	addq.l #1,%a0
 	move.b (%a2)+,%d1
 	move.b %d1,-1(%a0)
 	move.l %a2,%d0
 	tst.b %d1
-	jne .L282
+	jne .L292
 	move.l 20(%sp),%d0
 	mov3q.l #7,%d2
 	divu.l %d2,%d0
 	mulu.w #3,%d0
 	move.l %d0,%a0
 	add.l #roots,%a0
-.L283:
+.L293:
 	move.b (%a0)+,%d0
 	addq.l #1,%a1
 	move.b %d0,-1(%a1)
-	jeq .L266
+	jeq .L276
 	move.b (%a0)+,%d0
 	addq.l #1,%a1
 	move.b %d0,-1(%a1)
-	jne .L283
-	jra .L266
-.L274:
+	jne .L293
+	jra .L276
+.L284:
 	tst.l %a6
-	jlt .L300
+	jlt .L310
 	moveq #43,%d4
 	add.l #40,%d0
 	move.b %d0,29(%sp)
 	move.b %d4,28(%sp)
-.L301:
+.L311:
 	move.l %sp,%d0
 	add.l #32,%d0
-	jra .L277
-.L300:
+	jra .L287
+.L310:
 	moveq #56,%d1
 	sub.l %d0,%d1
 	move.b %d1,%d0
 	move.b %d0,29(%sp)
-	jra .L301
+	jra .L311
 	.size	akl_key_text, .-akl_key_text
 	.align	2
 	.globl	akl_knob_claims
 	.type	akl_knob_claims, @function
 akl_knob_claims:
 	tst.l -2147483630
-	jeq .L304
+	jeq .L314
 	move.b 1175456536,%d1
 	mvz.b 1175456537,%d0
 	lsl.l #8,%d0
@@ -1491,7 +1519,7 @@ akl_knob_claims:
 	mvs.b %d0,%d0
 	neg.l %d0
 	rts
-.L304:
+.L314:
 	clr.l %d0
 	rts
 	.size	akl_knob_claims, .-akl_knob_claims
@@ -1528,6 +1556,8 @@ names:
 	.string	"MIX"
 	.string	"MIN"
 	.string	"LOC"
+	.local	close_on_release
+	.comm	close_on_release,4,2
 	.local	order_prev
 	.comm	order_prev,4,2
 	.local	show_shift

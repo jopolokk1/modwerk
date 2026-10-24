@@ -6,7 +6,7 @@ Lock the arpeggiator's KEY on single steps of a MIDI track, the way you lock a p
 
 Version `0.1.0-experimental`, for OS 1.40C card builds and, for beta testers, over USB on the Modwerk base.
 
-**Hardware status.** Not tested on a unit. Every result so far is from the ColdFire emulator ([TESTING.md](TESTING.md)).
+**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as a trial on the Modwerk base with its three events: the per-step keys came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). Card builds, Keep, a power cycle and the MKI are not tested.
 
 ## Controls
 
@@ -49,12 +49,12 @@ One stock gesture is touched:
 - OS 1.40C. Card builds patch three stock sites; over USB the Modwerk base shares them as events (`ev_midi_note_key`, `ev_arp_setup_knob`, `ev_arp_setup_text`), so the package patches no stock code. The base must carry those events.
 - The track's own KEY stays stock's (OFF, MAJOR or MINOR). The other modes exist only as step locks: a value stock's Part check rejects can lose the bank at power-up, so the module keeps its modes out of the Part.
 - A lock acts on the notes as the track sends them, after TRAN (read from the code; the emulator runs used TRAN 0). Notes played into the track from a MIDI keyboard are not tested.
-- How far KEY moves per encoder click follows stock's KEY knob. Its feel on a unit is not tested.
+- KEY moves one key per encoder detent with a trig held, as stock's KEY knob does; on the author's MKII it felt a bit sensitive.
 - Upstream octabam's MIDI Scales adds the same modes to the track's KEY by patching the same places; the two are not built together.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). The C core (`akl.c`, compiled to `akl.s` by the reviewed GCC 16.2) is tested on the host for every key and note (`test_akl.c`, run by `verify.py`). In the emulator a card build played a four-lock progression, a single wrapping lock and an OFF lock against the same arpeggio without the module: every note fell into the step's key on exactly the same frame, with no note left on. The hold-trig gesture stored the lock and left the track's KEY alone, and the KEY box showed it. Over the emulated USB link the package installed and kept on the base, and its three events reached it. Performance: [evidence/performance.json](evidence/performance.json). Not tested on hardware.
+See [TESTING.md](TESTING.md). The C core (`akl.c`, compiled to `akl.s` by the reviewed GCC 16.2) is tested on the host for every key and note (`test_akl.c`, run by `verify.py`). In the emulator a card build played a four-lock progression, a single wrapping lock and an OFF lock against the same arpeggio without the module: every note fell into the step's key on exactly the same frame, with no note left on. The hold-trig gesture stored the lock and left the track's KEY alone, and the KEY box showed it. Over the emulated USB link the package installed and kept on the base, and its three events reached it. Performance: [evidence/performance.json](evidence/performance.json) (emulator). On a unit: [evidence/hardware.md](evidence/hardware.md).
 
 ## Authorship and licences
 

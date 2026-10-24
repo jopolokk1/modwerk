@@ -6,7 +6,7 @@
       "New: lock the arpeggiator's KEY on single steps of a MIDI track. Hold a trig in ARP SETUP and turn KEY; the step's key holds until the next lock.",
       "Seven modes in all twelve roots: Major, Dorian, Phrygian, Lydian, Mixolydian, Minor and Locrian. The arpeggio keeps running while the key changes.",
       "While a trig is held, ARP SETUP's KEY box shows that step's lock.",
-      "Known issue: a development draft, tested in the emulator only; not yet on a unit."
+      "Known issue: a development draft; tested on one MKII as a trial over USB, not yet kept, power-cycled or built for a card."
     ]
   }
 ]

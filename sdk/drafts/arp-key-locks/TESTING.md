@@ -1,6 +1,6 @@
 # ARP KEY LOCKS: tests
 
-Draft `0.1.0-experimental`. Every result here is from the host or the ColdFire emulator; **nothing has run on a unit**.
+Draft `0.1.0-experimental`. The results below are from the host and the ColdFire emulator; the run on the author's MKII is in [evidence/hardware.md](evidence/hardware.md).
 
 ## What ran it
 
@@ -55,4 +55,4 @@ With nothing installed, the base matched stock: identical MIDI with KEY OFF, C M
 
 ## Not tested
 
-Hardware of any kind; playback over USB; the MKI panel; how far KEY moves per physical encoder click; LEN and the arp note editor with a trig held; copying, clearing or placing trigs over locked steps; TRAN other than 0; notes from MIDI IN; Part copy and reload; a power cycle.
+On a unit (see evidence/hardware.md for what did run): card builds, Keep, a power cycle; the MKI panel; LEN and the arp note editor with a trig held; copying, clearing or placing trigs over locked steps; TRAN other than 0; notes from MIDI IN; Part copy and reload; a power cycle.

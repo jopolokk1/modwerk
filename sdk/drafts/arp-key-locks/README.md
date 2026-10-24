@@ -4,9 +4,11 @@
 
 Lock the arpeggiator's KEY on single steps of a MIDI track, the way you lock a parameter. Hold a trig in MIDI ARP SETUP and turn KEY: that step keeps its own key, for example F DORIAN, and the key holds until the next locked step, wrapping at the end of the pattern. The arpeggio keeps running while the key changes under it; only its notes move into the new scale. Seven modes in all twelve roots: MAJOR, DORIAN, PHRYGIAN, LYDIAN, MIXOLYDIAN, MINOR and LOCRIAN. A pattern without a lock plays the track's KEY, as on stock.
 
+It can also move one note of the arpeggio on a trig: hold the trig, pick the arp note with D and move it up or down by steps of the key with E. On that trig's arpeggio, for example, the 4th note plays one step higher; the next trig without a setting plays the arpeggio as it is.
+
 Version `0.1.0-experimental`, for OS 1.40C card builds and, for beta testers, over USB on the Modwerk base.
 
-**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as a trial on the Modwerk base with its three events: the per-step keys came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). Card builds, Keep, a power cycle and the MKI are not tested.
+**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as trials on the Modwerk base with its three events: the per-step keys and the arp note shifts came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). Card builds, Keep, a power cycle and the MKI are not tested.
 
 ## Controls
 
@@ -15,10 +17,12 @@ Version `0.1.0-experimental`, for OS 1.40C card builds and, for beta testers, ov
 | MIDI ARP SETUP (FUNC + AMP on a MIDI track) | Hold one or more trigs, turn F (KEY) | Locks a key on each held step. Turning starts from the step's own lock, or from the track's KEY when the step has none. |
 | The same | Turn F down past OFF while holding | Removes the step's lock: the step follows the lock before it again. |
 | The same | Hold a trig, turn nothing | The KEY box shows the step's lock: root and mode (C / PHR), OFF, or -- for none. |
+| The same | Hold a trig, turn D | Picks the arp note to move, N1 to N16 (the arp sequence's notes, as LEN counts them). The first turn starts at the note the step already moves, else N1. Turned below N1: -- removes the step's arp note setting. |
+| The same | Hold a trig, turn E | Moves the picked arp note -7 to +7 steps of the key (semitones with KEY OFF); 0 plays it as it is. The KEY box shows N4 over +1. |
 
 Lock values, in turning order: OFF (no correction on that step), then C MAJ, C DOR, C PHR, C LYD, C MIX, C MIN, C LOC, C# MAJ and so on to B LOC. MAJ is MAJOR and MIN natural MINOR, as stock's KEY names them; DOR, PHR, LYD, MIX and LOC are the other modes.
 
-Everything else on ARP SETUP is stock: LEN, the arp note editor, and KEY when no trig is held, which sets the track's own KEY (OFF, MAJOR or MINOR in the twelve roots).
+The KEY box shows what was touched last: the key after F, the arp note after D or E. Everything else on ARP SETUP is stock: LEN, the arp note editor (LEVEL), tapping a trig to switch an arp step on or off, and KEY when no trig is held, which sets the track's own KEY (OFF, MAJOR or MINOR in the twelve roots). To give a whole pattern one of the other modes, lock it on step 1: a lock holds until the next one.
 
 ## Usage
 
@@ -30,19 +34,27 @@ Program the arpeggio as usual (NOTE and chord notes on the trigs, MODE on the AM
 2. Hold trig 1 and turn KEY to C MIN; release it. Hold trig 5 and turn KEY to F DOR, then trig 9 to G PHR and trig 13 to C MIN. While a trig is held the KEY box shows its lock.
 3. Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again.
 
+### Move one arp note on a trig
+
+1. With the arpeggio playing a sequence of at least four notes (LEN 4 or more), hold the trig of step 9 in ARP SETUP (grid recording on).
+2. Turn D to N4, then E one detent up: the KEY box shows N4 over +1. Release the trig.
+3. Trig 9's arpeggio now plays its 4th note one step of the key higher; trig 1's plays as before. Hold trig 9 and turn D below N1 to remove it.
+
 ### How locks combine
 
-The lock that holds on a step is the nearest one at or before it; before the first lock of a pattern, the last one wraps round. One lock on step 1 therefore sets the whole pattern's key. The pattern's length counts, and each track's own length in PER TRACK mode. Locks are saved with the project (tested in the emulator). They sit among the step's stock locks, so by octabam's firmware notes copying a trig or a pattern carries them, and placing a new trig or clearing a trig's locks removes them, as it does stock's locks; that is not tested here.
+The lock that holds on a step is the nearest one at or before it; before the first lock of a pattern, the last one wraps round. One lock on step 1 therefore sets the whole pattern's key. The pattern's length counts, and each track's own length in PER TRACK mode.
+
+An arp note setting belongs to its trig: it holds from its step until the next step with a trig or a setting of its own, so a trig without one plays the arpeggio as it is. A step keeps one arp note setting; E on another note moves the step's setting to it. Locks are saved with the project (tested in the emulator). They sit among the step's stock locks, so by octabam's firmware notes copying a trig or a pattern carries them, and placing a new trig or clearing a trig's locks removes them, as it does stock's locks; that is not tested here.
 
 ### What changes in a stock flow
 
 One stock gesture is touched:
 
-- **What changes and for whom.** In MIDI ARP SETUP, turning KEY while a trig is held stores a lock on the held steps instead of changing the track's KEY, and the KEY box shows the held step's lock. On the stock OS a held trig makes no difference there: the turn edits the track's KEY. Everyone with the module in their build or module set has the gesture.
+- **What changes and for whom.** In MIDI ARP SETUP, turning KEY while a trig is held stores a lock on the held steps instead of changing the track's KEY, encoders D and E (unused there on stock) set the held step's arp note shift, and the KEY box shows the held step's lock or shift. On the stock OS a held trig makes no difference there: the turn edits the track's KEY. Everyone with the module in their build or module set has the gesture.
 - **Why.** A step's key belongs where KEY already is, and the held-trig gesture is how every other value is locked. Stock's own lock storage has no slot for a setup value, so the lock lives in a step's spare lock byte, which stock neither edits, applies nor validates.
-- **What you see and do differently.** With a trig held, KEY reads the step's lock (-- for none) and turning it edits that lock. KEY without a held trig, LEN, the arp note editor and every other page are unchanged.
+- **What you see and do differently.** With a trig held, KEY reads the step's lock (-- for none) and turning it edits that lock; D and E edit the step's arp note shift. KEY without a held trig, LEN, the arp note editor, tapping a trig to switch an arp step, and every other page are unchanged.
 - **Turning it off.** Release the trig: KEY is the track's again. Remove the module and the locks stay in the project, unused: stock never reads them.
-- **Neighbouring flows checked** (emulator, MKII panel, against the original OS): KEY without a held trig; a held trig's NOTE and NLEN locks on the NOTE and ARP pages; the trig pattern and the arp's step mask while trigs are pressed in ARP SETUP. Not checked: the MKI panel, LEN or the note editor with a trig held.
+- **Neighbouring flows checked** (emulator, MKII panel, against the original OS): KEY without a held trig; a held trig's NOTE and NLEN locks on the NOTE and ARP pages; the trig pattern and the arp's step mask while trigs are pressed and D and E turned in ARP SETUP. Not checked: the MKI panel, LEN or the note editor with a trig held.
 
 ## Compatibility and limitations
 

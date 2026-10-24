@@ -5,10 +5,10 @@
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
-    "static": 174464,
-    "measured": 29696,
+    "static": 281600,
+    "measured": 32064,
     "budget": 2200000,
-    "method": "An event is one MIDI sequencer tick: the note hook runs in its interrupt (0x400a1e0c, vector 0x60), once per note a track sends, priced at 16 core cycles an instruction (the ColdFire V4 envelope Direct Jump's record uses). Static: 10,904 instructions, an upper bound from akl.s for the dearest tick, all eight MIDI tracks sending four notes each with every track's step answer uncached: per track one 64-step scan (at most 64 x 10 instructions of loop and about 190 around it, 832 measured) and three cached notes (97 measured), plus about 60 for the base's take dispatch and claim per note over USB. Measured on the card build under ot_emu --mkii (octabam 8250be0), 24 Oct 2026: PC watches on akl_note_entry and its two exits on a 64-step pattern whose only lock sits just after the notes (three tracks arpeggiating, every new step a full scan): at most 832 instructions a note, 70-97 cached, 1,856 in the dearest tick (5 notes). Budget: the next tick, 8.33 ms at the top tempo of 300 BPM, 2,200,000 cycles at 264 MHz. Not chip timing."
+    "method": "An event is one MIDI sequencer tick: the note hook runs in its interrupt (0x400a1e0c, vector 0x60), once per note a track sends, priced at 16 core cycles an instruction (the ColdFire V4 envelope Direct Jump's record uses). Static: 17,600 instructions, an upper bound from akl.s for the dearest tick: all eight MIDI tracks sending four notes each with every track's step answer uncached and no trig on any track, so both backward scans (the key, then the arp note shift, 64 steps each at about 10 and 12 instructions a step) run their full length, plus about 60 for the base's take dispatch and claim per note over USB. Measured on the card build under ot_emu --mkii (octabam 8250be0), 24 Oct 2026: PC watches on akl_note_entry and its two exits on a 64-step pattern whose only key lock sits just after the notes, with an arp note shift on step 14 (three tracks arpeggiating, every new step a full key scan): at most 900 instructions a note, 84-109 cached, 2,004 in the dearest tick (5 notes). Budget: the next tick, 8.33 ms at the top tempo of 300 BPM, 2,200,000 cycles at 264 MHz. Not chip timing."
   },
   "load": {
     "frameUs": 362.8,
@@ -25,10 +25,11 @@
     "stuckNotes": 0,
     "hangs": 0,
     "dropped": 0,
-    "droppedExplanation": "Emulator, not hardware, the run above on the module image: 62,000 three-byte messages and 6,200 clock bytes; PC watches on the MIDI handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48) counted every one, on both images, none missing. MIDI OUT: 206 note-ons and their note-offs on both images, 44 of them moved into the lock's key with the module; after the final STOP no note was left on, including the four STOPs that landed mid-note. Hangs: frames advanced to the end and the run ended on its own quit. Bypass: a pattern without locks plays stock's KEY (claims answer no; host test and the USB check)."
+    "droppedExplanation": "Emulator, not hardware, the run above on the module image (shifts included in the source): 62,000 three-byte messages and 6,200 clock bytes; PC watches on the MIDI handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48) counted every one, none missing (the note-off watch counted one entry more than was sent, a watch counting an entry twice, as Direct Jump's record notes). MIDI OUT: 206 note-ons and their note-offs, 44 moved into the lock's key; after the final STOP no note was left on, including the four STOPs that landed mid-note. Hangs: frames advanced to the end and the run ended on its own quit. Bypass: a pattern without locks or shifts plays stock's KEY (claims answer no; host test and the USB check)."
   },
   "hardwareEvidence": {
-    "status": "untested",
-    "note": "No unit has run this module. Every figure above is ot_emu."
+    "status": "reported",
+    "existingReport": "evidence/hardware.md",
+    "note": "Two trial sessions on the author's MKII over USB (24 Oct 2026); nothing timed on the unit. The cycles, load and stress rows are ot_emu measurements."
   }
 }

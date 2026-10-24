@@ -21,12 +21,17 @@ Draft `0.1.0-experimental`. The results below are from the host and the ColdFire
 
 In the toolchain image it also checks that `akl.s` is exactly what GCC 16.2 makes of `akl.c` (`-mcpu=5475 -O2 -ffreestanding -fno-builtin -fno-common -fno-pic -fno-late-combine-instructions`), and `sdk/runtime/m68k_codegen.py` found no post-increment hazard in the object.
 
+## Emulator: the playing step
+
+`0x800064d0 + 8 + track` holds the step the sequencer prepares next; the playing step is `0x800064e0 + 8 + track`, which changes when the track's tick counter (`0x800064f0 + 8 + track`) returns to 0. An earlier build read the first and changed every key one step early. Keys whose notes agree at the boundaries hide that (C MIN, F DOR and G PHR are one set of notes), so the playback runs below include C MAJ then C LYD on step 5: the F♯ on step 4 must become F. That run fails on the old reading and passes now.
+
 ## Emulator, card build
 
 A local remix with ARP KEY LOCKS alone, built by Modwerk's `sdk/octabam` (`make bus`): its three detours (6, 8 and 6 bytes) plus the DRAM loader, 112 bytes changed against stock in all.
 
 - **Playback.** The arpeggio with and without the module, the same input: every note-on came on the same frame, and every note was the reference note moved into the key of its step. Four locks (C MIN, F DOR, G PHR, C MIN on steps 1, 5, 9, 13): 13 of 13 notes. One lock (G PHR on step 13), held from step 13 round the loop: 13 of 13. An OFF lock on step 1 and C# MIN on step 9: 13 of 13. No note left on in any run.
 - **The gesture.** In grid recording, MIDI ARP SETUP open, trig 5 held, F turned: step 5's spare lock byte took the value (three single counts from KEY OFF: C PHR) and the track's KEY byte was not written. Without the module the same input changed the track's KEY (0, 4, 8, 12 at four counts a report), as on stock.
+- **Arp note shifts.** One setting, arp note N +1, on the first trig's step (stock's arp from that trig: three notes before the next trig): exactly the N-th note of that trig's arpeggio moved, for N = 1 to 3, nothing after the next trig, every note on the same frame. The arp's place in its sequence is `0x46c77b17 + 10 × track` while a note is sent (`+0x16` is its speed timer). On the panel, trig 9 held: D picked N1 to N4 (nothing stored), E +1 stored note 4 +1 and E -3 made it -2; the arp's step mask and the trig mask did not change.
 - **No side effects.** Pressing and releasing trig 5 in ARP SETUP changed neither the track's trig mask nor the arp's step mask, with and without the module.
 - **The KEY box.** LCD captures (media/): OFF with no trig held, `--` holding a trig without a lock, C MIN after six counts, F DOR holding the step locked to it, and the track's KEY again on release. Stock redraws the box when a trig is pressed.
 
@@ -40,15 +45,15 @@ With nothing installed, the base matched stock: identical MIDI with KEY OFF, C M
 
 [evidence/performance.json](evidence/performance.json); emulator figures, not chip timing.
 
-- **Per note.** The note hook runs in the MIDI sequencer's tick interrupt (`0x400a1e0c`, vector 0x60), once per note a track sends. PC watches on its entry and its two exits, a 64-step pattern whose only lock is just after the notes (each new step scans the whole pattern on the locked track, and on the two others): 832 instructions at most, on a new step; 70 to 97 when the step's answer is cached. Statically, at most 64 x 10 instructions of scan plus about 190 around it.
-- **Per tick.** The same run grouped by tick: at most 5 notes and 1,856 instructions in one tick. A static bound for the dearest possible tick (eight tracks, four notes each, every answer uncached, the base's dispatch over USB): about 10,900 instructions, 174,464 cycles at 16 an instruction, against one tick at 300 BPM (2,200,000 cycles).
-- **Load and stress, 62 s, the same input on the original OS and on the card build** (`ot_emu --mkii --dsp --frame`): one three-byte message every ms (note on, CC, note off on channels 1-8) and a clock byte every 10 ms (250 BPM), the 64-step project with a G PHR lock, STOP and PLAY at 7, 22, 37 and 52 s, Part 2 and back at 30 and 31 s. Longest frame interrupt (entry `0x4000aad4` to epilogue `0x4000d9a6`): 23,201 instructions on both, 131.9 µs in the port's time. Idle: 59.20 % and 59.22 %. Every message reached its handler on both images. MIDI OUT: 206 note-ons with their note-offs on both, 44 moved into the key with the module, none left on.
+- **Per note, key locks only (an earlier build).** The note hook runs in the MIDI sequencer's tick interrupt (`0x400a1e0c`, vector 0x60), once per note a track sends. PC watches on its entry and its two exits, a 64-step pattern whose only lock is just after the notes (each new step scans the whole pattern on the locked track, and on the two others): 832 instructions at most, on a new step; 70 to 97 when the step's answer is cached. Statically, at most 64 x 10 instructions of scan plus about 190 around it.
+- **Per note and per tick, with arp note shifts.** The same 64-step pattern with a shift on step 14: at most 900 instructions a note, 84-109 cached, at most 2,004 in one tick (5 notes). A static bound for the dearest possible tick (eight tracks, four notes each, every answer uncached, no trigs so both scans run 64 steps, the base's dispatch over USB): about 17,600 instructions, 281,600 cycles at 16 an instruction, against one tick at 300 BPM (2,200,000 cycles).
+- **Load and stress, 62 s, the same input on the original OS and on the card build** (`ot_emu --mkii --dsp --frame`): one three-byte message every ms (note on, CC, note off on channels 1-8) and a clock byte every 10 ms (250 BPM), the 64-step project with a G PHR lock, STOP and PLAY at 7, 22, 37 and 52 s, Part 2 and back at 30 and 31 s. Longest frame interrupt (entry `0x4000aad4` to epilogue `0x4000d9a6`): 23,201 instructions on both, 131.9 µs in the port's time. Idle: 59.20 % and 59.22 % (the current build; the key-locks-only build gave 59.22 % too). Every message reached its handler on both images (the module run's note-off watch counted one entry more than was sent: a double count, none missing). MIDI OUT: 206 note-ons with their note-offs on both, 44 moved into the key with the module, none left on.
 
 `npm run perf:audit -- check evidence/performance.json`:
 
 ```
 ✓ record          coldfire record for arp-key-locks@0.1.0-experimental
-✓ cycles          worst event 29696 of 2200000 cycles (1%)
+✓ cycles          worst event 32064 of 2200000 cycles (1%)
 ✓ stock benchmark under the same flood the longest frame interrupt grows by 0.0 us (0.0% of the 362.8 us frame) and idle time falls by -0.0 points vs stock
 ✓ stress          1000 messages/s at 250 BPM for 62 s, no stuck note, no hang, 0 dropped
 ```

@@ -62,9 +62,11 @@ static unsigned length(uint32_t pattern, uint32_t track)
 /* The lock that holds on step s: the nearest at or before it, wrapping at the length; NONE without any. */
 static unsigned held_lock(uint32_t track, unsigned s, unsigned n)
 {
-    for (unsigned k = 0; k < n; ++k) {
-        unsigned v = U8(track + LOCK30((s + n - k) % n));
+    uint32_t at = track + LOCK30(s), first = track + LOCK30(0), last = track + LOCK30(n - 1u);
+    for (unsigned k = n; k; --k) { /* backwards from s, wrapping at the length: no division in the interrupt */
+        unsigned v = U8(at);
         if (v <= LAST) return v;
+        at = at == first ? last : at - 32u;
     }
     return NONE;
 }

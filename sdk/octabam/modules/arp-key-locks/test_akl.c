@@ -24,10 +24,17 @@ static uint8_t *mem(uintptr_t a)
 static uint32_t be32(uintptr_t a) { uint8_t *p = mem(a); return (uint32_t)p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3]; }
 static void set32(uintptr_t a, uint32_t v) { uint8_t *p = mem(a); p[0] = v >> 24; p[1] = v >> 16; p[2] = v >> 8; p[3] = v; }
 static void stamp(void) { edited++; }
+static int redraws;
+static void redraw(void) { redraws++; }
+static void tail(int a, int b) { (void)a; (void)b; }
+static void (*akl_stub(uintptr_t a))(void)
+{
+    return a == 0x40027e00u ? stamp : a == 0x40079d48u ? redraw : (void (*)(void))tail;
+}
 #define AKL_HOST
 #define U8(a) (*mem((uintptr_t)(a)))
 #define U32(a) be32((uintptr_t)(a))
-#define AKL_CALL(type, a) (stamp)
+#define AKL_CALL(type, a) ((type)akl_stub(a))
 #define AKL_EDITED(bank) (set32((bank) + 0x9b332u, 1), set32(0x100f8598u, 1))
 #include "akl.c"
 
@@ -83,7 +90,7 @@ int main(void)
     assert(akl_key(2) == NONE);             /* track length 8 */
     bank0[0x8e55] = 0;
 
-    /* The knob: track 4 at C MINOR (stock 2), trig 5 held on page 1: +3 from C MINOR (6) is 9 (C# MAJOR). */
+    /* The knob: track 4 at C MINOR (stock 2), trig 5 held on page 1: +3 from C MINOR (6) is 9 (C# DORIAN). */
     unsigned t = 4;
     memset(bank0 + MIDI_TRACK(t), 0xff, 0x8b0u); memset(cs1 + MIDI_TRACK(t), 0xff, 0x8b0u);
     *mem(UI_TRACK) = (uint8_t)t; *mem(UI_PATTERN) = 0; *mem(UI_PART) = 0;
@@ -93,14 +100,20 @@ int main(void)
     set32(MIDI_MODE, 1);
     assert(akl_knob_claims());
     akl_knob(3);
-    assert(bank0[TRACK(t) + LOCK30(4)] == 9 && cs1[TRACK(t) + LOCK30(4)] == 9 && edited == 1);
+    assert(bank0[TRACK(t) + LOCK30(4)] == 9 && cs1[TRACK(t) + LOCK30(4)] == 9 && edited == 1 && redraws == 1);
+    char text[16];
+    assert(akl_text_claims(5) && !akl_text_claims(2));
+    akl_key_text(text, 0); assert(!strcmp(text, "DOR") && !strcmp(text + 5, "C#"));
     at_step(t, 7); assert(akl_key(t) == 9); /* the edit reaches the cache */
     akl_knob(-9);  /* 9 - 9 = 0: OFF, still a lock */
     assert(bank0[TRACK(t) + LOCK30(4)] == 0);
+    akl_key_text(text, 0); assert(!strcmp(text, "") && !strcmp(text + 5, "OFF"));
     akl_knob(-1);  /* below OFF: no lock */
     assert(bank0[TRACK(t) + LOCK30(4)] == NONE && cs1[TRACK(t) + LOCK30(4)] == NONE);
+    akl_key_text(text, 0); assert(!strcmp(text, "") && !strcmp(text + 5, "--"));
     akl_knob(200); /* from the track's KEY, clamped to the last */
     assert(bank0[TRACK(t) + LOCK30(4)] == LAST);
+    akl_key_text(text, 0); assert(!strcmp(text, "LOC") && !strcmp(text + 5, "B"));
     /* Page 2 (steps 17-32): trig 1 is step 17; trig 16 (row 1, bit 7) is step 32. */
     set32(STEP_PAGE, 1); *mem(KEY_ROWS) = 1; *mem(KEY_ROWS + 1) = 0x80;
     akl_knob(1);

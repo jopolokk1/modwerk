@@ -6,9 +6,10 @@ without one plays stock's KEY. Seven modes in all twelve roots: MAJOR, DORIAN, P
 LOCRIAN. The track's own KEY stays stock's (OFF, MAJOR, MINOR): a value stock's Part validator rejects can lose the
 bank at power-up, so the added modes live in the locks only.
 
-Two stock sites, the ones the base shares as events over USB (runtime.json):
+Three stock sites, the ones the base shares as events over USB (runtime.json):
 - 0x4009fb58, the MIDI note sender (ev_midi_note_key): a held lock moves the note into its key.
 - 0x4007a2ec, MIDI ARP SETUP's encoder handler (ev_arp_setup_knob): KEY with a trig held stores the locks.
+- 0x4007a1ec, MIDI ARP SETUP's drawer (ev_arp_setup_text): KEY with a trig held shows the step's lock.
 
 The C core (akl.c, compiled to akl.s) is tested on the host (test_akl.c, verify.py). Emulator and hardware
 results are in TESTING.md.
@@ -34,6 +35,8 @@ MODULE = Module(
         Detour(0x4007A2EC, stock_guard(0x4007A2EC, 8, "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f"),
                "unit", "akl_knob_entry", "MIDI ARP SETUP's encoders: KEY with a trig held locks the steps",
                pad_to=8),
+        Detour(0x4007A1EC, stock_guard(0x4007A1EC, 6, "5a5d9a451cef368d61badb2d5212624df56beca30e3fcaa6483f0c42a35a92ee"),
+               "unit", "akl_text_entry", "MIDI ARP SETUP's KEY with a trig held: the step's lock instead of the track's KEY"),
     ),
     gates=(Gate("modules/arp-key-locks/verify.py", remix_arg=False),),
 )

@@ -241,17 +241,15 @@ akl_note:
 	.globl	akl_knob
 	.type	akl_knob, @function
 akl_knob:
-	lea (-40,%sp),%sp
+	lea (-36,%sp),%sp
 	movem.l #3084,(%sp)
-	move.l 44(%sp),%a1
 	move.b 1175456536,%d0
 	mvz.b 1175456537,%d1
 	move.b 269161676,%d2
 	move.b 269161680,%d3
-	move.l 1187521622,%a3
+	move.l 1187521622,%a1
 	lsl.l #8,%d1
 	move.l %a1,20(%sp)
-	move.l %a3,28(%sp)
 	mvz.b %d0,%d0
 	move.w %d2,%a0
 	move.w %d3,%a2
@@ -267,14 +265,14 @@ akl_knob:
 	moveq #15,%d2
 	cmp.l %d0,%d2
 	jcs .L34
-	move.l %a3,%d0
+	move.l 20(%sp),%d0
 	add.l #-1074668000,%d0
 	cmp.l #9535680,%d0
 	jhi .L34
 	move.w %a0,%d0
 	move.w %a2,%d1
 	move.b 269161679,%d3
-	move.l %a3,%a0
+	move.l 20(%sp),%a0
 	add.l #586355,%a0
 	ext.w %d0
 	ext.w %d1
@@ -287,21 +285,21 @@ akl_knob:
 	mov3q.l #3,%d2
 	and.l %d2,%d3
 	move.l %a0,16(%sp)
-	move.l %a3,%a0
+	move.l 20(%sp),%a0
+	move.l 16(%sp),%a3
 	lea (18640,%a0),%a0
 	add.l %d1,%a0
 	add.l %d0,%a0
 	add.l %d0,%d1
 	mvz.w #6322,%d0
-	move.l 16(%sp),%a3
 	muls.l %d0,%d3
 	mvz.b (%a3,%d3.l),%d0
 	move.l %d0,%d2
 	subq.l #1,%d2
-	move.l %d2,32(%sp)
+	move.l %d2,28(%sp)
 	btst #0,%d0
 	jne .L36
-	move.l 32(%sp),%d0
+	move.l 28(%sp),%d0
 	lsr.l #1,%d0
 	lea (78,%a0),%a0
 	mov3q.l #5,%a2
@@ -312,8 +310,8 @@ akl_knob:
 	move.l %a3,24(%sp)
 	clr.l %d1
 	lea 1(%a2,%d0.l),%a0
-	add.l 20(%sp),%a0
-	move.l %a0,36(%sp)
+	add.l 40(%sp),%a0
+	move.l %a0,32(%sp)
 .L43:
 	move.l %a1,%d0
 	btst %d1,%d0
@@ -332,9 +330,9 @@ akl_knob:
 	cmp.l %d3,%d2
 	jcc .L39
 	moveq #23,%d3
-	cmp.l 32(%sp),%d3
+	cmp.l 28(%sp),%d3
 	jcs .L45
-	move.l 36(%sp),%a0
+	move.l 32(%sp),%a0
 .L40:
 	tst.l %a0
 	jlt .L46
@@ -359,19 +357,22 @@ akl_knob:
 	jeq .L47
 	addq.l #1,%d0
 	move.b %d0,gen
-	movem.l (%sp),#3084
-	move.l 28(%sp),%a0
+	move.l 20(%sp),%a0
 	add.l #635698,%a0
 	mov3q.l #1,(%a0)
 	mov3q.l #1,269452696
-	lea (40,%sp),%sp
-	jmp 1073905152
+	jsr 1073905152
+	jsr 1074240840
+	move.l 40(%sp),-(%sp)
+	clr.l -(%sp)
+	jsr 1074260376
+	addq.l #8,%sp
 .L34:
 	movem.l (%sp),#3084
-	lea (40,%sp),%sp
+	lea (36,%sp),%sp
 	rts
 .L39:
-	add.l 20(%sp),%a0
+	add.l 40(%sp),%a0
 	tst.l %a0
 	jge .L57
 .L46:
@@ -382,10 +383,10 @@ akl_knob:
 	move.b %d3,(%a2,%d0.l)
 	jra .L38
 .L45:
-	move.l 20(%sp),%a0
+	move.l 40(%sp),%a0
 	jra .L40
 .L36:
-	move.l 32(%sp),%d0
+	move.l 28(%sp),%d0
 	lsr.l #1,%d0
 	lea (78,%a0),%a0
 	sub.l %a2,%a2
@@ -396,26 +397,37 @@ akl_knob:
 	move.l %a3,24(%sp)
 	clr.l %d1
 	lea 1(%a2,%d0.l),%a0
-	add.l 20(%sp),%a0
-	move.l %a0,36(%sp)
+	add.l 40(%sp),%a0
+	move.l %a0,32(%sp)
 	jra .L43
 .L47:
 	moveq #1,%d0
-	movem.l (%sp),#3084
-	move.l 28(%sp),%a0
+	move.l 20(%sp),%a0
 	add.l #635698,%a0
 	mov3q.l #1,(%a0)
 	move.b %d0,gen
 	mov3q.l #1,269452696
-	lea (40,%sp),%sp
-	jmp 1073905152
+	jsr 1073905152
+	jsr 1074240840
+	move.l 40(%sp),-(%sp)
+	clr.l -(%sp)
+	jsr 1074260376
+	addq.l #8,%sp
+	jra .L34
 	.size	akl_knob, .-akl_knob
 	.align	2
-	.globl	akl_knob_claims
-	.type	akl_knob_claims, @function
-akl_knob_claims:
+	.globl	akl_text_claims
+	.type	akl_text_claims, @function
+akl_text_claims:
+	mov3q.l #5,%d0
+	cmp.l 4(%sp),%d0
+	jeq .L59
+.L61:
+	clr.l %d0
+	rts
+.L59:
 	tst.l -2147483630
-	jeq .L60
+	jeq .L61
 	move.b 1175456536,%d1
 	mvz.b 1175456537,%d0
 	lsl.l #8,%d0
@@ -425,10 +437,206 @@ akl_knob_claims:
 	mvs.b %d0,%d0
 	neg.l %d0
 	rts
-.L60:
+	.size	akl_text_claims, .-akl_text_claims
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.LC0:
+	.string	"OFF"
+	.text
+	.align	2
+	.globl	akl_key_text
+	.type	akl_key_text, @function
+akl_key_text:
+	lea (-12,%sp),%sp
+	move.l %d3,-(%sp)
+	move.l %d2,-(%sp)
+	move.b 1175456536,%d1
+	mvz.b 1175456537,%d0
+	move.b 269161676,%d2
+	lsl.l #8,%d0
+	move.l 24(%sp),%a0
+	mvz.b %d1,%d1
+	move.b %d2,12(%sp)
+	or.l %d1,%d0
+	move.b 269161680,%d3
+	move.l 1187521622,%a1
+	clr.b (%a0)
+	move.b %d3,8(%sp)
+	tst.l %d0
+	jeq .L68
+	mvz.b %d2,%d1
+	mov3q.l #7,%d2
+	cmp.l %d1,%d2
+	jcs .L68
+	mvz.b %d3,%d1
+	moveq #15,%d3
+	cmp.l %d1,%d3
+	jcs .L68
+	move.l %a1,%d1
+	add.l #-1074668000,%d1
+	cmp.l #9535680,%d1
+	jhi .L68
+	mov3q.l #1,%d1
+	and.l %d0,%d1
+	btst #0,%d0
+	jne .L92
+.L69:
+	addq.l #1,%d1
+	btst %d1,%d0
+	jeq .L69
+.L70:
+	move.l 1175264772,%d2
+	move.b 8(%sp),%d3
+	move.b 12(%sp),%d0
+	lsl.l #4,%d2
+	lea (18718,%a1),%a1
+	ext.w %d3
+	ext.w %d0
+	move.l %d2,16(%sp)
+	move.w %d3,%d2
+	mulu.w #2224,%d0
+	moveq #63,%d3
+	mulu.w #36568,%d2
+	add.l %d2,%a1
+	add.l %d0,%a1
+	move.l 16(%sp),%d0
+	add.l %d1,%d0
+	and.l %d3,%d0
+	lsl.l #5,%d0
+	mvz.b (%a1,%d0.l),%d1
+	moveq #84,%d0
+	cmp.l %d1,%d0
+	jcc .L72
+	moveq #45,%d1
+	clr.b %d2
+	move.b %d1,5(%a0)
+	move.b %d1,6(%a0)
+	move.b %d2,7(%a0)
+.L67:
+	move.l (%sp)+,%d2
+	move.l (%sp)+,%d3
+	lea (12,%sp),%sp
+	rts
+.L68:
+	moveq #45,%d0
+	clr.b %d1
+	move.b %d0,5(%a0)
+	move.b %d0,6(%a0)
+	move.b %d1,7(%a0)
+	move.l (%sp)+,%d2
+	move.l (%sp)+,%d3
+	lea (12,%sp),%sp
+	rts
+.L72:
+	move.l %a0,%d0
+	addq.l #5,%d0
+	tst.l %d1
+	jne .L73
+	move.l %a0,%d1
+	add.l #9,%d1
+	lea .LC0,%a1
+.L74:
+	move.l %d0,%a0
+	addq.l #1,%d0
+	move.b (%a1)+,(%a0)
+	cmp.l %d0,%d1
+	jeq .L67
+	move.l %d0,%a0
+	addq.l #1,%d0
+	move.b (%a1)+,(%a0)
+	cmp.l %d0,%d1
+	jne .L74
+	jra .L67
+.L73:
+	subq.l #1,%d1
+	move.l %d1,12(%sp)
+	move.l %d1,%d3
+	mov3q.l #7,%d2
+	remu.l %d2,%d1:%d3
+	lsl.l #2,%d1
+	move.l %d1,%a1
+	add.l #names,%a1
+	move.l %a1,8(%sp)
+.L75:
+	move.l 8(%sp),%a1
+	addq.l #1,%a0
+	addq.l #1,8(%sp)
+	move.b (%a1)+,%d1
+	move.b %d1,-1(%a0)
+	jne .L75
+	move.l 12(%sp),%d1
+	mov3q.l #7,%d2
+	divu.l %d2,%d1
+	mulu.w #3,%d1
+	move.l %d1,%a0
+	add.l #roots,%a0
+.L76:
+	move.b (%a0)+,%d1
+	move.l %d0,%a1
+	addq.l #1,%d0
+	move.b %d1,(%a1)
+	jeq .L67
+	move.b (%a0)+,%d1
+	move.l %d0,%a1
+	addq.l #1,%d0
+	move.b %d1,(%a1)
+	jne .L76
+	jra .L67
+.L92:
+	clr.l %d1
+	jra .L70
+	.size	akl_key_text, .-akl_key_text
+	.align	2
+	.globl	akl_knob_claims
+	.type	akl_knob_claims, @function
+akl_knob_claims:
+	tst.l -2147483630
+	jeq .L95
+	move.b 1175456536,%d1
+	mvz.b 1175456537,%d0
+	lsl.l #8,%d0
+	mvz.b %d1,%d1
+	or.l %d1,%d0
+	sne %d0
+	mvs.b %d0,%d0
+	neg.l %d0
+	rts
+.L95:
 	clr.l %d0
 	rts
 	.size	akl_knob_claims, .-akl_knob_claims
+	.section	.rodata
+	.type	roots, @object
+	.size	roots, 36
+roots:
+	.string	"C"
+	.zero	1
+	.string	"C#"
+	.string	"D"
+	.zero	1
+	.string	"D#"
+	.string	"E"
+	.zero	1
+	.string	"F"
+	.zero	1
+	.string	"F#"
+	.string	"G"
+	.zero	1
+	.string	"G#"
+	.string	"A"
+	.zero	1
+	.string	"A#"
+	.string	"B"
+	.zero	1
+	.type	names, @object
+	.size	names, 28
+names:
+	.string	"MAJ"
+	.string	"DOR"
+	.string	"PHR"
+	.string	"LYD"
+	.string	"MIX"
+	.string	"MIN"
+	.string	"LOC"
 	.data
 	.type	gen, @object
 	.size	gen, 1

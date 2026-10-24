@@ -137,6 +137,33 @@ void akl_knob(int delta)
     gen = (uint8_t)(gen == 255u ? 1u : gen + 1u);
     AKL_EDITED(bank);
     AKL_CALL(void (*)(void), 0x40027e00u)();
+    /* As stock's KEY edit ends: ARP SETUP redrawn (its KEY now the lock's, akl_key_text), then its tail. */
+    AKL_CALL(void (*)(void), 0x40079d48u)();
+    AKL_CALL(void (*)(int, int), 0x4007e998u)(0, delta);
+}
+
+/* The scale names in stock's three letters, and the roots. */
+static const char names[7][4] = {"MAJ", "DOR", "PHR", "LYD", "MIX", "MIN", "LOC"};
+static const char roots[12][3] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+static void put(volatile char *to, const char *from) { do *to++ = *from; while (*from++); }
+
+/* ev_arp_setup_text's claim: KEY (slot 5) in MIDI mode while a trig is held. */
+int akl_text_claims(unsigned slot) { return slot == 5u && U32(MIDI_MODE) && held_trigs(); }
+
+/* KEY's text while a trig is held, in stock's layout (the scale at buffer, the root at buffer + 5): the first held
+ * step's own lock, OFF, or -- for none. */
+void akl_key_text(volatile char *buffer, unsigned value)
+{
+    unsigned held = held_trigs(), t = U8(UI_TRACK), p = U8(UI_PATTERN), k = 0;
+    uint32_t bank = U32(UI_BANK);
+    (void)value;
+    put(buffer, "");
+    if (!held || t > 7u || p > 15u || bank < 0x400e21e0u || bank > BANK(15)) { put(buffer + 5, "--"); return; }
+    while (!(held >> k & 1u)) ++k;
+    unsigned v = U8(bank + p * PATTERN + MIDI_TRACK(t) + LOCK30((k + 16u * U32(STEP_PAGE)) & 63u));
+    if (v > LAST) put(buffer + 5, "--");
+    else if (!v) put(buffer + 5, "OFF");
+    else { put(buffer, names[(v - 1u) % 7u]); put(buffer + 5, roots[(v - 1u) / 7u]); }
 }
 
 /* ev_arp_setup_knob's claim: MIDI mode and a held trig. Encoder F is checked by the entry, which sees it. */

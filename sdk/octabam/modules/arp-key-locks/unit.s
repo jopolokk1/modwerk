@@ -45,6 +45,38 @@ akl_knob_entry:
         movem.l %d2-%d7/%a2-%a4,(%sp)
         jmp     0x4007a2f4
 
+| 0x4007a1ec (ev_arp_setup_text), MIDI ARP SETUP's drawer about to draw LEN or KEY: d3 the slot, d4 the track's
+| byte, a3 the slot's descriptor, a2/d2 the place, d6 the surface; d0-d1/a0-a1 are free. KEY while a trig is held:
+| the slot's own drawer with akl_key_text, then on at 0x4007a216 as stock is; anything else: the two instructions the
+| site held, whose flags the branch after it reads.
+        .globl  akl_text_entry
+akl_text_entry:
+        move.l  %d3,-(%sp)
+        jsr     akl_text_claims
+        addq.l  #4,%sp
+        tst.l   %d0
+        beq.s   6f
+        movea.l 48(%a3),%a0
+        tst.l   %a0
+        bne.s   5f
+        lea     0x400479b4,%a0            | stock's drawer for a slot that names none
+5:      move.l  %d6,-(%sp)
+        pea     akl_key_text
+        clr.l   -(%sp)
+        moveq   #0,%d0
+        move.b  %d4,%d0
+        move.l  %d0,-(%sp)
+        move.l  %d3,-(%sp)
+        movea.l %d2,%a1
+        pea     29(%a1)
+        pea     53(%a2)
+        jsr     (%a0)
+        lea     28(%sp),%sp
+        jmp     0x4007a216
+6:      movea.l 48(%a3),%a0
+        tst.l   %a0
+        jmp     0x4007a1f2
+
         .ifdef  MODWERK_EVENTS
 | The take records (struct modwerk_take {claims, entry}): note keys are taken on the tracks a lock holds on, ARP
 | SETUP's turns while a trig is held in MIDI mode; the entries hand anything else back to stock.
@@ -54,4 +86,7 @@ akl_take_note_key:
         .globl  akl_take_arp_knob
 akl_take_arp_knob:
         .long   akl_knob_claims, akl_knob_entry
+        .globl  akl_take_arp_text
+akl_take_arp_text:
+        .long   akl_text_claims, akl_text_entry
         .endif

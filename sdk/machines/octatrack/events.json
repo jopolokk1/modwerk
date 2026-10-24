@@ -338,6 +338,20 @@
     "jmp 0x40004d16"
    ],
    "done": null
+  },
+  {
+   "site": "0x4009fb58",
+   "length": 6,
+   "guard": "b9fd3e826833844716d1d4904ee373c65d291047e78b9f34f8d9e3c95dac30fd",
+   "routine": "the MIDI tracks' note sender 0x4009f794 (sequencer and arpeggiator), once per note of a track's trig or arp step: d7 the track (0-7), a2 the note byte after TRAN (signed; -1 drops it), -64(%fp) KEY's root offset (0 with KEY OFF); stock then corrects the note to KEY's Major or Minor scale (0x4009fb5e) and sends it, keeping it for its note-off",
+   "head": [],
+   "tail": [
+    "tst.l -64(%fp) | stock's own test, its branch made absolute: KEY OFF sends the note as it is",
+    "bgt.s 1f",
+    "jmp 0x4009fb80",
+    "1: jmp 0x4009fb5e"
+   ],
+   "done": null
   }
  ],
  "events": [
@@ -1589,6 +1603,22 @@
      "what": "MIDI NOTE SETUP's drawer (its window's and its writers' calls): stock's, then the generator list in its empty left half"
     }
    ]
+  },
+  {
+   "event": "ev_midi_note_key",
+   "index": 32,
+   "kind": "take",
+   "site": "0x4009fb58",
+   "length": 6,
+   "entry": "jmp",
+   "arg": "d7",
+   "room": 8,
+   "when": "a MIDI track's note, from its trig, chord or arpeggiator, is about to be corrected to the track's KEY (ARP SETUP) and sent (d7 the track)",
+   "context": "the MIDI sequencer tick 0x400a1e0c (an interrupt, vector 0x60; octabam docs/firmware/MIDI_SCENES.md section 5), once per note: a few microseconds, no firmware call, nothing that waits or allocates",
+   "contract": "The taker's entry gets every register and the stack as at the site: d7 the track, a2 the note byte (it may rewrite it, 0-127, or store -1 to drop the note), -64(%fp) stock's KEY root offset. It returns to stock by jumping to 0x4009fb80 to send the note as it is now, or by replaying the stock tail below (stock's KEY correction); it must not jump into the site's bytes. Stock keeps the note it sends for that note's note-off.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [],
+   "orderEvidence": "No module subscribes yet. Upstream octabam's MIDI Scales (radiohagen, MIT) patches this site for its extra modes; a Modwerk port, or a module that locks KEY per step, takes it here instead."
   }
  ]
 }

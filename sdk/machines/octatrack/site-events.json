@@ -166,6 +166,12 @@
    "kind": "table",
    "room": 4,
    "record": 36
+  },
+  {
+   "index": 32,
+   "event": "ev_midi_note_key",
+   "kind": "take",
+   "room": 8
   }
  ]
 }

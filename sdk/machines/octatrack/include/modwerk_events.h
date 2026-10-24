@@ -153,4 +153,7 @@ struct modwerk_midi_generator {
 };
 #define MODWERK_MIDI_GENERATOR_ABI 2u
 
+/* ev_midi_note_key (0x4009fb58, take: subscribe a struct modwerk_take): a MIDI track's note, from its trig, chord or arpeggiator, is about to be corrected to the track's KEY (ARP SETUP) and sent (d7 the track). The MIDI sequencer tick 0x400a1e0c (an interrupt, vector 0x60; octabam docs/firmware/MIDI_SCENES.md section 5), once per note: a few microseconds, no firmware call, nothing that waits or allocates. The taker's entry gets every register and the stack as at the site: d7 the track, a2 the note byte (it may rewrite it, 0-127, or store -1 to drop the note), -64(%fp) stock's KEY root offset. It returns to stock by jumping to 0x4009fb80 to send the note as it is now, or by replaying the stock tail below (stock's KEY correction); it must not jump into the site's bytes. Stock keeps the note it sends for that note's note-off. */
+#define MODWERK_EV_MIDI_NOTE_KEY 32
+
 #endif

@@ -33,6 +33,13 @@ The same unit and base, ARP KEY LOCKS with arp note shifts (D picks the arp note
 - An earlier package of this session read the step the sequencer prepares next (`0x800064d0`), so a key or shift changed one step early; the first session's progression did not show it, because its notes at the boundaries were in both keys. The package above reads the playing step (`0x800064e0`).
 - Also found here: tapping a trig in ARP SETUP switches that arp step on or off (stock), so the arp note is picked with D, not with a second trig.
 
+## Third session, the same day: trig conditions and closing ARP SETUP
+
+The same unit and base, packages `871cfc87…` and `1d086d7b…`, as trials, never kept.
+
+- An arp note shift on a trigless trig with a trig condition: measured over USB MIDI, the arpeggio differed in two notes in every other 96-clock window and was identical in the windows between, the same notes each time (the recording began mid-pattern, without START, so the steps are not numbered; whether the condition was 1:2 or the pattern 32 steps was not established).
+- Reported: holding a trig, opening ARP SETUP, turning a knob and letting go of the trig closed ARP SETUP and showed the page with the pattern's trigs ("now it closes").
+
 ## Not covered
 
 Card builds on a unit; Keep, a power cycle with the module kept, and the project saved and reloaded with locks on a unit; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).

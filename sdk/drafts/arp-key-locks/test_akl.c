@@ -126,28 +126,35 @@ int main(void)
     assert(akl_move(67, 6, 1) == 68 && akl_move(67, 6, 2) == 70 && akl_move(67, 6, -1) == 65 && akl_move(67, 0, 1) == 68);
     assert(akl_move(127, 1, 3) == 127 && akl_move(0, 1, -3) == 0 && akl_move(66, 6, 0) == 65);
 
-    /* The gesture on track 6: hold trig 9 (the step), tap trig 4 (the arp note), turn D. */
+    /* The gesture on track 6: hold trig 9 (the step), D picks the arp note, E shifts it. */
     t = 5;
     memset(bank0 + MIDI_TRACK(t), 0xff, 0x8b0u); memset(cs1 + MIDI_TRACK(t), 0xff, 0x8b0u);
     bank0[TRACK(t) + 0x28] = 16;
     *mem(UI_TRACK) = (uint8_t)t; set32(STEP_PAGE, 0); bank0[PART_KEY(t)] = 2;
     *mem(KEY_ROWS) = 0; *mem(KEY_ROWS + 1) = 1;            /* trig 9 */
     assert(akl_text_claims(5));
-    *mem(KEY_ROWS) = 1 << 3;                                /* + trig 4 */
-    assert(akl_text_claims(5));
-    *mem(KEY_ROWS) = 0;                                     /* trig 4 let go, trig 9 still held */
-    assert(akl_text_claims(5));
-    assert(akl_turn(3, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x31 && cs1[TRACK(t) + LOCK31(8)] == 0x31);
+    assert(akl_turn(3, 1)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N1") && !strcmp(text, "--")); /* first turn: N1 */
+    assert(akl_turn(3, 3)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N4"));
+    assert(bank0[TRACK(t) + LOCK31(8)] == NONE);           /* picking stores nothing */
+    assert(akl_turn(4, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x31 && cs1[TRACK(t) + LOCK31(8)] == 0x31);
     akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "+1"));
-    assert(akl_turn(3, -3) && bank0[TRACK(t) + LOCK31(8)] == 0x3e);   /* -2 */
+    assert(akl_turn(4, -3) && bank0[TRACK(t) + LOCK31(8)] == 0x3e);   /* -2 */
     akl_key_text(text, 0); assert(!strcmp(text, "-2"));
-    assert(akl_turn(5, 1) && bank0[TRACK(t) + LOCK30(8)] == 7 && bank0[TRACK(t) + LOCK30(3)] == NONE); /* KEY: the step only */
+    assert(akl_turn(3, 20)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N16") && !strcmp(text, "--")); /* clamped */
+    assert(akl_turn(3, -12)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "-2"));
+    assert(akl_turn(5, 1) && bank0[TRACK(t) + LOCK30(8)] == 7);       /* KEY: the held step */
     akl_key_text(text, 0); assert(!strcmp(text, "LOC") && !strcmp(text + 5, "C")); /* KEY shown: C LOC (7) */
-    assert(akl_turn(3, 0)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N4"));                        /* D: the shift again */
-    assert(!akl_turn(2, 1) && !akl_turn(6, 1));            /* LEN and the note editor stay stock's */
-    assert(akl_turn(3, 2) && bank0[TRACK(t) + LOCK31(8)] == NONE);    /* back to 0: no shift */
-    assert(akl_turn(3, 1));
-    *mem(KEY_ROWS + 1) = 0; assert(akl_text_claims(5) == 0 && !akl_turn(3, 1)); /* nothing held: stock's */
+    assert(!akl_turn(2, 1) && !akl_turn(6, 1) && !akl_turn(0, 1));    /* LEN, the note editor, A: stock's */
+    assert(akl_turn(4, 2) && bank0[TRACK(t) + LOCK31(8)] == 0x30);    /* 0: back to normal from here, kept */
+    akl_key_text(text, 0); assert(!strcmp(text, "0"));
+    assert(akl_turn(3, -4)); assert(bank0[TRACK(t) + LOCK31(8)] == NONE); /* D below N1: removed */
+    akl_key_text(text, 0); assert(!strcmp(text + 5, "--"));
+    assert(akl_turn(3, 4)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N1")); /* back up: N1 */
+    assert(akl_turn(3, 3) && akl_turn(4, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x31);
+    *mem(KEY_ROWS + 1) = 0; assert(akl_text_claims(5) == 0 && !akl_turn(4, 1)); /* nothing held: stock's */
+    *mem(KEY_ROWS + 1) = 1; assert(akl_text_claims(5)); assert(akl_turn(3, 0)); /* held again: D starts at the shifted note */
+    akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "+1"));
+    *mem(KEY_ROWS + 1) = 0; akl_text_claims(5);
 
     /* Playing: step 9, the arp on (MODE), LEN 4 (setup +0x0e is 3), sending its 4th note (its place 3). */
     *mem(ARP_MODE(t)) = 1; *mem(LIVE_KEY(t) - 0x11 + 0x0e) = 3; *mem(LIVE_KEY(t)) = 2; /* track KEY C MIN */
@@ -156,7 +163,12 @@ int main(void)
     note = 67; assert(akl_claims(t) && akl_note(t, &note) && note == 68);   /* G +1 in C MIN: G# */
     *mem(ARP_POS(t)) = 0; note = 67; assert(!akl_claims(t) && !akl_note(t, &note) && note == 67); /* the 1st note: stock */
     *mem(ARP_MODE(t)) = 0; *mem(ARP_POS(t)) = 3; assert(!akl_claims(t));   /* arp off: no shift */
-    *mem(ARP_MODE(t)) = 1; at_step(t, 9); assert(!akl_claims(t));          /* the next step: none */
+    *mem(ARP_MODE(t)) = 1; at_step(t, 11); *mem(ARP_POS(t)) = 3; assert(akl_claims(t)); /* held on later steps */
+    bank0[TRACK(t) + LOCK31(12)] = 0x30; gen++;                             /* step 13: back to normal */
+    at_step(t, 13); assert(!akl_claims(t));
+    at_step(t, 2); assert(!akl_claims(t));                                  /* wraps: step 13's 0 holds round */
+    bank0[TRACK(t) + LOCK31(12)] = NONE; gen++;
+    at_step(t, 2); assert(akl_claims(t));                                   /* without it step 9's +1 wraps round */
 
     puts("test_akl: ok");
     return 0;

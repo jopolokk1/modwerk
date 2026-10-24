@@ -15,7 +15,7 @@
 #define PATTERN 0x8ed8u
 #define MIDI_TRACK(t) (0x48d0u + (uint32_t)(t) * 0x8b0u) /* a MIDI track's record in its pattern */
 #define LOCK30(s) (0x30u + (uint32_t)(s) * 32u + 30u)     /* step s's spare lock byte: its key */
-#define LOCK31(s) (0x30u + (uint32_t)(s) * 32u + 31u)     /* the other: arp note (high nibble) and shift (low, signed) */
+#define LOCK31(s) (0x30u + (uint32_t)(s) * 32u + 31u)     /* the other: arp note (high nibble), shift (low, signed; 0 ends one) */
 #define ARP_POS(t) (0x46c77b17u + 10u * (t))            /* MIDI track t's arpeggiator: its place in the note sequence (0..LEN) */
 #define ARP_MODE(t) (0x46c76fe0u + 32u * (t) + 14u)     /* its MODE as it plays (locks applied), 0 OFF */
 #define LIVE_KEY(t) (0x46c76df1u + 0x44u * (t))         /* the track's KEY as it plays */
@@ -63,13 +63,14 @@ static unsigned length(uint32_t pattern, uint32_t track)
     return n < 1u ? 1u : n > 64u ? 64u : n;
 }
 
-/* The lock that holds on step s: the nearest at or before it, wrapping at the length; NONE without any. */
-static unsigned held_lock(uint32_t track, unsigned s, unsigned n)
+/* The setting that holds on step s in the step's lock byte at offset b (30: key, 31: arp note shift): the nearest
+ * at or before it, wrapping at the length; NONE without any. */
+static unsigned held_from(uint32_t track, unsigned s, unsigned n, unsigned b)
 {
-    uint32_t at = track + LOCK30(s), first = track + LOCK30(0), last = track + LOCK30(n - 1u);
+    uint32_t at = track + 0x30u + 32u * s + b, first = track + 0x30u + b, last = track + 0x30u + 32u * (n - 1u) + b;
     for (unsigned k = n; k; --k) { /* backwards from s, wrapping at the length: no division in the interrupt */
         unsigned v = U8(at);
-        if (v <= LAST) return v;
+        if (b == 30u ? v <= LAST : v != NONE) return v;
         at = at == first ? last : at - 32u;
     }
     return NONE;
@@ -89,8 +90,8 @@ unsigned akl_key(unsigned t)
     if (cache_for[t] != want) {
         uint32_t pattern = BANK(b) + p * PATTERN, track = pattern + MIDI_TRACK(t);
         unsigned n = length(pattern, track);
-        cache_key[t] = (uint8_t)held_lock(track, s % n, n);
-        cache_shift[t] = U8(track + LOCK31(s % n)); /* a shift holds on its own step only */
+        cache_key[t] = (uint8_t)held_from(track, s % n, n, 30u);
+        cache_shift[t] = (uint8_t)held_from(track, s % n, n, 31u); /* a shift holds until the next one, as a key */
         cache_for[t] = want;
     }
     return cache_key[t];
@@ -107,8 +108,8 @@ static unsigned from_stock(unsigned k)
  * panel's own rows are read. */
 static unsigned held_trigs(void) { return U8(KEY_ROWS) | (unsigned)U8(KEY_ROWS + 1u) << 8; }
 
-/* Which trigs mean what in ARP SETUP: the first held is the step, a second one tapped while it is held the arp
- * note, as stock's own editor reads a held trig. Seen on every redraw (stock redraws on each trig) and turn. */
+/* The step being edited in ARP SETUP: the first trig held. Tapping another trig there switches that arp step on or
+ * off (stock), so the arp note is picked with D instead. Seen on every redraw (stock redraws on each trig) and turn. */
 static int order_step = -1, order_note = -1, show_shift; /* show_shift: the KEY box shows the shift, not the key */
 static unsigned order_prev;
 static int lowest(unsigned m) { int k = 0; while (!(m >> k & 1u)) ++k; return k; }
@@ -117,7 +118,6 @@ static void track_trigs(void)
     unsigned h = held_trigs(), fresh = h & ~order_prev;
     if (!h) order_step = order_note = -1, show_shift = 0;
     else if (order_step < 0 || !(h >> order_step & 1u)) { order_step = lowest(fresh ? fresh : h); order_note = -1; show_shift = 0; }
-    else if (fresh & ~(1u << order_step)) order_note = lowest(fresh & ~(1u << order_step)), show_shift = 1;
     order_prev = h;
 }
 
@@ -126,7 +126,7 @@ static void track_trigs(void)
 static unsigned shift_now(unsigned t)
 {
     unsigned r = cache_shift[t];
-    if (r == NONE || !U8(ARP_MODE(t))) return NONE;
+    if (r == NONE || !(r & 15u) || !U8(ARP_MODE(t))) return NONE; /* 0: back to the arp's own note */
     unsigned pos = U8(ARP_POS(t)), n = U8(LIVE_KEY(t) - 0x11u + 0x0eu) + 1u; /* the arp's LEN, setup +0x0e, 0-15 */
     return n && pos % n == (r >> 4) ? r : NONE;
 }
@@ -167,7 +167,7 @@ void akl_knob(int delta)
     uint32_t mirror = CS1_PATTERNS + p * PATTERN + MIDI_TRACK(t);
     unsigned stock = U8(bank + U8(UI_PART) % 4u * 0x18b2u + PART_KEY(t));
     for (unsigned k = 0; k < 16u; ++k) {
-        if (!(held >> k & 1u) || (int)k == order_note) continue;
+        if (!(held >> k & 1u)) continue;
         unsigned s = (k + 16u * U32(STEP_PAGE)) & 63u;
         unsigned v = U8(track + LOCK30(s));
         int now = v <= LAST ? (int)v : (int)from_stock(stock);
@@ -184,35 +184,78 @@ void akl_knob(int delta)
     AKL_CALL(void (*)(int, int), 0x4007e998u)(0, delta);
 }
 
-/* ev_arp_setup_knob, encoder D with a step held and an arp note tapped: that step's shift of that note, -7 to +7
- * steps of the key; 0 removes it. Written as the KEY locks are. */
-static void akl_shift(int delta)
+/* The edited step's shift record, and its address in the pattern (0 without a step). */
+static uint32_t shift_at(void)
 {
     unsigned t = U8(UI_TRACK), p = U8(UI_PATTERN);
     uint32_t bank = U32(UI_BANK);
-    if (order_step < 0 || order_note < 0 || t > 7u || p > 15u || bank < 0x400e21e0u || bank > BANK(15)) return;
-    unsigned s = ((unsigned)order_step + 16u * U32(STEP_PAGE)) & 63u, r;
-    uint32_t at = bank + p * PATTERN + MIDI_TRACK(t) + LOCK31(s);
-    r = U8(at);
-    int k = r != NONE && (int)(r >> 4) == order_note ? (int)((r & 15u) ^ 8u) - 8 : 0;
-    k += delta; k = k < -7 ? -7 : k > 7 ? 7 : k;
-    r = k ? (unsigned)order_note << 4 | ((unsigned)k & 15u) : NONE;
-    U8(at) = (uint8_t)r;
-    U8(CS1_PATTERNS + p * PATTERN + MIDI_TRACK(t) + LOCK31(s)) = (uint8_t)r;
-    gen = (uint8_t)(gen == 255u ? 1u : gen + 1u);
-    AKL_EDITED(bank);
-    AKL_CALL(void (*)(void), 0x40027e00u)();
+    if (order_step < 0 || t > 7u || p > 15u || bank < 0x400e21e0u || bank > BANK(15)) return 0;
+    return bank + p * PATTERN + MIDI_TRACK(t) + LOCK31(((unsigned)order_step + 16u * U32(STEP_PAGE)) & 63u);
+}
+
+/* The note D picks starts at the one the step's own setting names, else at the first. -2: D turned below N1, the
+ * step's setting removed. */
+static void pick_note(void)
+{
+    uint32_t at = shift_at();
+    if (order_note == -1) order_note = at && U8(at) != NONE ? (int)(U8(at) >> 4) : 0;
+}
+
+/* After an edit, as stock's KEY edit ends: ARP SETUP redrawn (its KEY box, akl_key_text), then its tail. */
+static void after_edit(int delta, int changed)
+{
+    if (changed) {
+        gen = (uint8_t)(gen == 255u ? 1u : gen + 1u);
+        AKL_EDITED(U32(UI_BANK));
+        AKL_CALL(void (*)(void), 0x40027e00u)();
+    }
     AKL_CALL(void (*)(void), 0x40079d48u)();
     AKL_CALL(void (*)(int, int), 0x4007e998u)(0, delta);
 }
 
-/* ev_arp_setup_knob: an encoder turned while a trig is held in MIDI mode. 1 when the module took the turn. */
+static void store_shift(uint32_t at, unsigned r)
+{
+    U8(at) = (uint8_t)r;
+    U8(at - U32(UI_BANK) + CS1_PATTERNS) = (uint8_t)r;
+}
+
+/* Encoder E with a step held: the step's shift of the note D picked, -7 to +7 steps of the key, held until the next
+ * step with one; 0 ends a shift there. Written as the KEY locks are. */
+static void akl_shift(int delta)
+{
+    uint32_t at = shift_at();
+    if (!at) return;
+    if (order_note < 0) order_note = -1, pick_note();
+    unsigned r = U8(at);
+    int k = r != NONE && (int)(r >> 4) == order_note ? (int)((r & 15u) ^ 8u) - 8 : 0;
+    if (r != NONE && (int)(r >> 4) == order_note) k += delta;
+    else k = delta;
+    k = k < -7 ? -7 : k > 7 ? 7 : k;
+    store_shift(at, (unsigned)order_note << 4 | ((unsigned)k & 15u));
+    after_edit(delta, 1);
+}
+
+/* Encoder D with a step held: picks the arp note, N1 to N16; below N1 removes the step's setting. */
+static void akl_pick(int delta)
+{
+    if (order_note == -1) { pick_note(); after_edit(delta, 0); return; }
+    int was = order_note;
+    order_note = order_note == -2 ? (delta > 0 ? 0 : -2) : order_note + delta;
+    order_note = order_note > 15 ? 15 : order_note < 0 ? -2 : order_note;
+    uint32_t at = shift_at();
+    if (order_note == -2 && was != -2 && at && U8(at) != NONE) { store_shift(at, NONE); after_edit(delta, 1); return; }
+    after_edit(delta, 0);
+}
+
+/* ev_arp_setup_knob: an encoder turned while a trig is held in MIDI mode. F (5) locks the key, D (3) picks the arp
+ * note, E (4) shifts it. 1 when the module took the turn. */
 int akl_turn(unsigned encoder, int delta)
 {
     track_trigs();
     if (!U32(MIDI_MODE) || !held_trigs()) return 0;
     if (encoder == 5u) { show_shift = 0; akl_knob(delta); return 1; }
-    if (encoder == 3u) { show_shift = order_note >= 0; akl_shift(delta); return 1; }
+    if (encoder == 3u) { show_shift = 1; akl_pick(delta); return 1; }
+    if (encoder == 4u) { show_shift = 1; akl_shift(delta); return 1; }
     return 0;
 }
 
@@ -225,8 +268,8 @@ static void put(volatile char *to, const char *from) { do *to++ = *from; while (
 int akl_text_claims(unsigned slot) { track_trigs(); return slot == 5u && U32(MIDI_MODE) && held_trigs(); }
 
 /* KEY's text while a trig is held, in stock's layout (the bottom line at buffer, the top at buffer + 5): with an arp
- * note tapped or D turned last, its shift on the step (N4 over +1, or -- for none); else the step's own lock, OFF,
- * or -- for none. */
+ * note picked with D or shifted with E last, its shift on the step (N4 over +1, or -- for none); else the step's own
+ * lock, OFF, or -- for none. */
 void akl_key_text(volatile char *buffer, unsigned value)
 {
     unsigned t = U8(UI_TRACK), p = U8(UI_PATTERN);
@@ -235,13 +278,15 @@ void akl_key_text(volatile char *buffer, unsigned value)
     put(buffer, "");
     if (order_step < 0 || t > 7u || p > 15u || bank < 0x400e21e0u || bank > BANK(15)) { put(buffer + 5, "--"); return; }
     uint32_t step = bank + p * PATTERN + MIDI_TRACK(t), s = ((unsigned)order_step + 16u * U32(STEP_PAGE)) & 63u;
+    if (show_shift && order_note == -2) { put(buffer + 5, "--"); return; }   /* the step's setting removed */
     if (show_shift && order_note >= 0) {
         unsigned r = U8(step + LOCK31(s));
         char top[4] = {'N', (char)('1' + order_note % 9), 0, 0}, low[3] = {'-', '-', 0};
         if (order_note >= 9) { top[1] = '1'; top[2] = (char)('0' + order_note - 9); }
         if (r != NONE && (int)(r >> 4) == order_note) {
             int k = (int)((r & 15u) ^ 8u) - 8;
-            low[0] = k < 0 ? '-' : '+'; low[1] = (char)('0' + (k < 0 ? -k : k));
+            if (!k) { low[0] = '0'; low[1] = 0; }
+            else { low[0] = k < 0 ? '-' : '+'; low[1] = (char)('0' + (k < 0 ? -k : k)); }
         }
         put(buffer + 5, top); put(buffer, low);
         return;

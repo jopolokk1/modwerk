@@ -352,6 +352,20 @@
     "1: jmp 0x4009fb5e"
    ],
    "done": null
+  },
+  {
+   "site": "0x4007a2ec",
+   "length": 8,
+   "guard": "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f",
+   "routine": "MIDI ARP SETUP's encoder handler 0x4007a2ec(encoder, delta), reached through its window's records: 4(%sp) the encoder (2 LEN, 5 KEY, 6 the arp note editor), 8(%sp) the delta; KEY (0x4007a3e2) stores the track's setup byte +0x11 (0..24) in the Part, its battery-backed copy and the live copy. A held trig does not change it: the turn still edits the track's KEY",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4007a2f4"
+   ],
+   "done": null
   }
  ],
  "events": [
@@ -1619,6 +1633,22 @@
    "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
    "subscribers": [],
    "orderEvidence": "No module subscribes yet. Upstream octabam's MIDI Scales (radiohagen, MIT) patches this site for its extra modes; a Modwerk port, or a module that locks KEY per step, takes it here instead."
+  },
+  {
+   "event": "ev_arp_setup_knob",
+   "index": 33,
+   "kind": "take",
+   "site": "0x4007a2ec",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "an encoder turns on MIDI ARP SETUP (FUNC+AMP on a MIDI track), before stock edits LEN, KEY or an arp note",
+   "context": "the UI task (ARP SETUP's input layer): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site: (%sp) the return address, 4(%sp) the encoder (2 LEN, 5 KEY, 6 the arp note editor), 8(%sp) the delta. It takes the turn by returning to the caller with rts (stock edits nothing), or hands it to stock by replaying the stock tail below; it must not jump into the site's bytes. A taker that stores into the pattern or the Part writes the bank and its battery-backed copy and sets the edited flags as stock's writers do.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [],
+   "orderEvidence": "No module subscribes yet. A module that locks KEY per step claims only encoder 5 while a trig is held, and leaves every other turn to stock. Upstream octabam's MIDI Scales patches KEY's branch here (0x4007a3e2) for its extra modes; a port would take this event instead."
   }
  ]
 }

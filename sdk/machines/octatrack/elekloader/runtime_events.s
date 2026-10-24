@@ -694,6 +694,39 @@ modwerk_stock_40055170_6:
         .space  6 | the site's own stock bytes
         jmp 0x40055176
 
+| ---- 0x4007a2ec: ev_arp_setup_knob
+        .globl  modwerk_site_4007a2ec
+modwerk_site_4007a2ec:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_arp_setup_knob (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+116,%a2
+.L4007a2ec_take:
+        move.l  (%a2)+,%d0
+        beq     .L4007a2ec_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4007a2ec_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4007a2ec_take
+.L4007a2ec_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4007a2ec_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4007a2ec_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4007a2ec_8
+modwerk_stock_4007a2ec_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x4007a2f4
+
 | ---- 0x400866cc: ev_project_load
         .globl  modwerk_site_400866cc
 modwerk_site_400866cc:

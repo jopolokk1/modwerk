@@ -24,6 +24,15 @@ The base's USB MIDI port recorded with `aseqdump`, MIDI clock and transport sent
 - Every run that ended with STOP had every note-on matched by its note-off.
 - The base's heartbeat (diagnostic ticks) advanced at 60 a second throughout both trials; the transport-refusal counter stayed at the 9 it read after the RAM boot.
 
+## Second session, the same day: arp note shifts
+
+The same unit and base, ARP KEY LOCKS with arp note shifts (D picks the arp note, E shifts it), package `03915850…`, as a trial, never kept. The project: MIDI track 1 with trigs on steps 1 and 9, the arpeggiator on, LEN 4.
+
+- Reported: holding trig 9, D showed N1 to N4 and E +1 in the KEY box; the shift played on trig 9's arpeggio and not on trig 1's ("now seems correct").
+- Measured over USB MIDI with clock, three loops: trig 1's arpeggio played C D F G and C D F G (steps 1-8); trig 9's played C D F A and C D F A (steps 9-16): its 4th note one step of the key higher, every loop the same.
+- An earlier package of this session read the step the sequencer prepares next (`0x800064d0`), so a key or shift changed one step early; the first session's progression did not show it, because its notes at the boundaries were in both keys. The package above reads the playing step (`0x800064e0`).
+- Also found here: tapping a trig in ARP SETUP switches that arp step on or off (stock), so the arp note is picked with D, not with a second trig.
+
 ## Not covered
 
 Card builds on a unit; Keep, a power cycle with the module kept, and the project saved and reloaded with locks on a unit; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).

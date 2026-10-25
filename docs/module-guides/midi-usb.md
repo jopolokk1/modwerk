@@ -54,6 +54,8 @@ Keep a generator's edits cheap; they run on the UI task while the pattern plays.
 
 Flood and stop it: notes, CC and clock at the wire rate, stopped mid-note, a Part change while it runs, and count what is left sounding and what was dropped. `verify_midi.py`, `verify_ccmap.py`, `verify_usb.py`, `verify_usb_align.py` and `verify_usb_in.py` are the patterns. A host-side test is part of the work: name the operating system, the USB speed and the software you used, or say "not tested".
 
+To test a MIDI track's KEY in `ot_emu`, write it into the saved Part (MIDI setup at body + 0x4e2, 36 bytes a track, KEY at field 17), not the live byte: stock copies the Part's KEY over the live one when the pattern starts, so a poke after the load is gone by the first note. Check the run's output differs between keys; a run where it does not tested nothing.
+
 Match startup settings in native/worker image comparisons. The worker defaults to docking startup; the USB layout verifier explicitly requests classic startup to match its native composition. Different startup hooks are a real image difference, not a USB layout regression.
 
 For a private source-built POST base, run the executed ColdFire arithmetic probe:

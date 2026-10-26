@@ -27,16 +27,16 @@ MODULE = Module(
     proof=Proof.UNTESTED, proof_note="Host tests of the C core; emulator and hardware results in TESTING.md.",
     linked=(
         Linked("akl", "modules/arp-key-locks/akl.s", dram=True),
-        Linked("unit", "modules/arp-key-locks/unit.s", dram=True),
+        Linked("akl_unit", "modules/arp-key-locks/unit.s", dram=True),
     ),
     detours=(
         Detour(0x4009FB58, stock_guard(0x4009FB58, 6, "b9fd3e826833844716d1d4904ee373c65d291047e78b9f34f8d9e3c95dac30fd"),
-               "unit", "akl_note_entry", "the MIDI note sender: a held lock's key on each note"),
+               "akl_unit", "akl_note_entry", "the MIDI note sender: a held lock's key on each note"),
         Detour(0x4007A2EC, stock_guard(0x4007A2EC, 8, "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f"),
-               "unit", "akl_knob_entry", "MIDI ARP SETUP's encoders: KEY with a trig held locks the steps",
+               "akl_unit", "akl_knob_entry", "MIDI ARP SETUP's encoders: KEY with a trig held locks the steps",
                pad_to=8),
         Detour(0x4007A1EC, stock_guard(0x4007A1EC, 6, "5a5d9a451cef368d61badb2d5212624df56beca30e3fcaa6483f0c42a35a92ee"),
-               "unit", "akl_text_entry", "MIDI ARP SETUP's KEY with a trig held: the step's lock instead of the track's KEY"),
+               "akl_unit", "akl_text_entry", "MIDI ARP SETUP's KEY with a trig held: the step's lock instead of the track's KEY"),
     ),
     gates=(Gate("modules/arp-key-locks/verify.py", remix_arg=False),),
 )

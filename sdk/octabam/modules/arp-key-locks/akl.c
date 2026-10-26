@@ -164,9 +164,6 @@ int akl_move(int note, unsigned key, int k)
     return note;
 }
 
-/* ev_midi_note_key's claim: the tracks a lock holds on, or whose arp note the step shifts now. */
-int akl_claims(unsigned t) { return akl_key(t) != NONE || shift_now(t) != NONE; }
-
 /* The note of track t, a2's byte at the site: moved into the step's key, and by the step's shift when the arp sends
  * the note it names. 1 when the note is ours to send as it is now, 0 for stock's own KEY correction. */
 int akl_note(unsigned t, volatile int8_t *note)
@@ -177,6 +174,9 @@ int akl_note(unsigned t, volatile int8_t *note)
     if (*note >= 0) *note = (int8_t)(r == NONE ? akl_snap(*note, key) : akl_move(*note, key, (int)((r & 15u) ^ 8u) - 8));
     return 1;
 }
+
+/* ev_midi_note_key's claim: the tracks a lock holds on, or whose arp note the step shifts now. */
+int akl_claims(unsigned t) { return akl_key(t) != NONE || shift_now(t) != NONE; }
 
 
 /* ev_arp_setup_knob, encoder F (KEY) with trigs held: each held trig's step gets a lock, delta values on from its

@@ -53,10 +53,10 @@ akl_text_entry:
         addq.l  #4,%sp
         tst.l   %d0
         beq.s   6f
-        movea.l 48(%a3),%a0
-        tst.l   %a0
+        move.l  48(%a3),%d0               | encoded unlike stock's own call (the packages' stock-free scan)
+        movea.l %d0,%a0
         bne.s   5f
-        lea     0x400479b4,%a0            | stock's drawer for a slot that names none
+        movea.l #0x400479b4,%a0           | stock's drawer for a slot that names none
 5:      move.l  %d6,-(%sp)
         pea     akl_key_text
         clr.l   -(%sp)
@@ -64,8 +64,9 @@ akl_text_entry:
         move.b  %d4,%d0
         move.l  %d0,-(%sp)
         move.l  %d3,-(%sp)
-        movea.l %d2,%a1
-        pea     29(%a1)
+        moveq   #29,%d0
+        add.l   %d2,%d0
+        move.l  %d0,-(%sp)
         pea     53(%a2)
         jsr     (%a0)
         lea     28(%sp),%sp

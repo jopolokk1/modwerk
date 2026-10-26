@@ -418,6 +418,21 @@
       "path": "octatrack-modules/dejavu/0.1.0-experimental.mwrm"
     },
     {
+      "id": "arp-key-locks",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/arp-key-locks/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Arp Key Locks",
+      "module": "894693ae",
+      "bytes": 4884,
+      "sha256": "7962c35a5b200e2d01be7e37081e561ef50e558153fc75f2f69ead9e45e75d44"
+    },
+    {
       "id": "recorder-loop-fix",
       "base": true,
       "abi": 8,

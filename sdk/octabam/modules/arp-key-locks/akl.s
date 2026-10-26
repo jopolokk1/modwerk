@@ -733,27 +733,6 @@ akl_move:
 	rts
 	.size	akl_move, .-akl_move
 	.align	2
-	.globl	akl_claims
-	.type	akl_claims, @function
-akl_claims:
-	move.l 4(%sp),-(%sp)
-	jsr akl_key
-	addq.l #4,%sp
-	cmp.l #255,%d0
-	jeq .L167
-	mov3q.l #1,%d0
-	rts
-.L167:
-	move.l 4(%sp),-(%sp)
-	jsr shift_now
-	addq.l #4,%sp
-	cmp.l #255,%d0
-	sne %d0
-	mvs.b %d0,%d0
-	neg.l %d0
-	rts
-	.size	akl_claims, .-akl_claims
-	.align	2
 	.globl	akl_note
 	.type	akl_note, @function
 akl_note:
@@ -766,12 +745,12 @@ akl_note:
 	jsr shift_now
 	addq.l #8,%sp
 	cmp.l #255,%a2
-	jeq .L186
+	jeq .L180
 	move.l 24(%sp),%a1
 	tst.b (%a1)
-	jlt .L174
+	jlt .L168
 	cmp.l #255,%d0
-	jeq .L187
+	jeq .L181
 	move.l %d0,%d1
 	moveq #28,%d4
 	lsl.l %d4,%d1
@@ -783,17 +762,17 @@ akl_note:
 	move.l %d0,-(%sp)
 	jsr akl_move
 	lea (12,%sp),%sp
-.L178:
+.L172:
 	move.l 24(%sp),%a1
 	move.b %d0,(%a1)
-.L174:
+.L168:
 	movem.l (%sp),#1052
 	mov3q.l #1,%d0
 	lea (16,%sp),%sp
 	rts
-.L186:
+.L180:
 	cmp.l %d0,%a2
-	jeq .L179
+	jeq .L173
 	move.l 20(%sp),%d1
 	moveq #68,%d2
 	moveq #23,%d3
@@ -803,17 +782,17 @@ akl_note:
 	mvz.b (%a0),%d1
 	subq.l #1,%d1
 	cmp.l %d1,%d3
-	jcs .L171
+	jcs .L165
 	mov3q.l #1,%d4
 	and.l %d1,%d4
 	move.l %d4,%a0
 	btst #0,%d1
-	jeq .L172
+	jeq .L166
 	mov3q.l #5,%a0
-.L172:
+.L166:
 	move.l 24(%sp),%a1
 	tst.b (%a1)
-	jlt .L174
+	jlt .L168
 	lsr.l #1,%d1
 	moveq #28,%d4
 	mulu.w #7,%d1
@@ -828,16 +807,16 @@ akl_note:
 	move.l %d0,-(%sp)
 	jsr akl_move
 	lea (12,%sp),%sp
-	jra .L178
-.L187:
+	jra .L172
+.L181:
 	move.b (%a1),%d0
 	subq.l #1,%a2
 	moveq #83,%d1
 	cmp.l %a2,%d1
-	jcs .L178
+	jcs .L172
 	mvs.b %d0,%d1
 	tst.b %d0
-	jmi .L178
+	jmi .L172
 	mov3q.l #7,%d3
 	move.l %a2,%d2
 	add.l #12,%d1
@@ -849,15 +828,15 @@ akl_note:
 	remu.l %d2,%d3:%d1
 	mvz.w (%a1,%d4.l*2),%d1
 	btst %d3,%d1
-	jne .L178
+	jne .L172
 	move.l 24(%sp),%a1
 	subq.l #1,%d0
 	move.b %d0,(%a1)
-	jra .L174
-.L171:
+	jra .L168
+.L165:
 	move.l 24(%sp),%a0
 	tst.b (%a0)
-	jlt .L174
+	jlt .L168
 	move.l %d0,%d1
 	moveq #28,%d4
 	lsl.l %d4,%d1
@@ -870,13 +849,34 @@ akl_note:
 	move.l %d0,-(%sp)
 	jsr akl_move
 	lea (12,%sp),%sp
-	jra .L178
-.L179:
+	jra .L172
+.L173:
 	movem.l (%sp),#1052
 	clr.l %d0
 	lea (16,%sp),%sp
 	rts
 	.size	akl_note, .-akl_note
+	.align	2
+	.globl	akl_claims
+	.type	akl_claims, @function
+akl_claims:
+	move.l 4(%sp),-(%sp)
+	jsr akl_key
+	addq.l #4,%sp
+	cmp.l #255,%d0
+	jeq .L187
+	mov3q.l #1,%d0
+	rts
+.L187:
+	move.l 4(%sp),-(%sp)
+	jsr shift_now
+	addq.l #4,%sp
+	cmp.l #255,%d0
+	sne %d0
+	mvs.b %d0,%d0
+	neg.l %d0
+	rts
+	.size	akl_claims, .-akl_claims
 	.align	2
 	.globl	akl_knob
 	.type	akl_knob, @function

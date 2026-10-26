@@ -9443,9 +9443,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "On the author's MKII over USB (24 Oct 2026), on the base with the three events from #857, as trials: per-step keys recorded over USB MIDI with clock (477 notes, every note in its step's key), arp note shifts on the right trig only, and the gestures as described; package 1d086d7b ran in the third session. Host tests of the C core for every key and note (verify.py); in ot_emu a card build played the same notes on the same frames as the original OS with each moved into its step's key, and a 62 s MIDI flood showed no stuck note or hang.",
+        "summary": "On the author's MKII over USB (24 Oct 2026), on the base with the three events from #857, as trials: per-step keys recorded over USB MIDI with clock (477 notes, every note in its step's key), arp note shifts on the right trig only, and the gestures as described; package 1d086d7b ran in the third session; on 26 Oct the published package 7962c35a was kept beside nine other modules, played the tester's locks and stayed kept through a power cycle. Host tests of the C core for every key and note (verify.py); in ot_emu a card build played the same notes on the same frames as the original OS with each moved into its step's key, and a 62 s MIDI flood showed no stuck note or hang.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "d708bdf96225d5384d1045c9401cee8f9b90178f",
+        "evidenceRevision": "9d236928acbf98c893fb1ff93c18491d169cea77",
         "gates": [
           "modules/arp-key-locks/verify.py"
         ],
@@ -9490,7 +9490,7 @@
           },
           "moduleVersion": "0.1.0-experimental",
           "sourceSha256": "d5509d5fcf46c7b4c444d08a8578ad4d28fbae9c5dc53aa8d7a13cb7971a26d8",
-          "imageSha256": "1d086d7b5d96116eff96e8ac0b50607ff14e89ce12157fe7c2c4fb661397e416",
+          "imageSha256": "7962c35a5b200e2d01be7e37081e561ef50e558153fc75f2f69ead9e45e75d44",
           "cycles": [
             {
               "processor": "coldfire",
@@ -9540,14 +9540,15 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-10-24",
+            "testedOn": "2026-10-26",
             "tester": "jopolokk1",
-            "sourceRevision": "d708bdf96225d5384d1045c9401cee8f9b90178f",
-            "imageSha256": "1d086d7b5d96116eff96e8ac0b50607ff14e89ce12157fe7c2c4fb661397e416",
-            "summary": "The author's MKII, OS 1.40C, driven over USB by Claude Code, on the Modwerk beta base RAM-booted with the events from #857: three trial sessions on 24 Oct 2026. Per-step keys recorded over USB MIDI with clock (C MAJ / C MIN every four steps, 477 notes, every note in its step's key, every note-on matched by its note-off); an arp note shift played on its own trig's arpeggio only, three loops the same; a shift on a trigless trig with a condition; the KEY box and the gestures as described. Package 1d086d7b, the one submitted, ran in the third session. No freeze or error.",
+            "sourceRevision": "9d236928acbf98c893fb1ff93c18491d169cea77",
+            "imageSha256": "7962c35a5b200e2d01be7e37081e561ef50e558153fc75f2f69ead9e45e75d44",
+            "summary": "The author's MKII, OS 1.40C, driven over USB by Claude Code. Three trial sessions on 24 Oct 2026 on the beta base RAM-booted with the events from #857: per-step keys recorded over USB MIDI with clock (C MAJ / C MIN every four steps, 477 notes, every note in its step's key, every note-on matched by its note-off); an arp note shift played on its own trig's arpeggio only, three loops the same; a shift on a trigless trig with a condition; the KEY box and the gestures as described (package 1d086d7b). On 26 Oct 2026 the published package 7962c35a on the flashed base 92a13ff0 beside nine other modules: a trial that rolled back, then kept and still kept after a power cycle; the tester's locks played (notes changed every bar in a steady four-bar cycle, 115 note-ons each with its note-off, reported \"seems to work\"); the base's self-test passed twice and failed once on a DSP core over 90 % (E-Verb), cause not established. No freeze or error.",
             "limitations": [
-              "One unit, the author; trials that rolled back, apart from the base comparisons in #857.",
-              "Not run on the unit: card builds, a power cycle with the module kept, saving and reloading a project with locks, the MKI, PER TRACK lengths, Part changes, copying trigs, TRAN other than 0, MIDI IN notes.",
+              "One unit, the author.",
+              "Not run on the unit: card builds, playing locks after the power cycle, saving and reloading a project with locks, the MKI, PER TRACK lengths, Part changes, copying trigs, TRAN other than 0, MIDI IN notes.",
+              "The 26 Oct playback was not compared note by note with the project's locks; one of three self-tests failed on DSP load (Arp Key Locks has no DSP code).",
               "Load and timing are emulator figures, not measured on the unit."
             ],
             "report": "evidence/hardware.md"

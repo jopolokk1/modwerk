@@ -40,6 +40,15 @@ The same unit and base, packages `871cfc87…` and `1d086d7b…`, as trials, nev
 - An arp note shift on a trigless trig with a trig condition: measured over USB MIDI, the arpeggio differed in two notes in every other 96-clock window and was identical in the windows between, the same notes each time (the recording began mid-pattern, without START, so the steps are not numbered; whether the condition was 1:2 or the pattern 32 steps was not established).
 - Reported: holding a trig, opening ARP SETUP, turning a knob and letting go of the trig closed ARP SETUP and showed the page with the pattern's trigs ("now it closes").
 
+## Fourth session, 26 October 2026: the published package, kept
+
+Flashed base `92a13ff0…` (main through #925 with the KEY events of #857), nine other modules kept (E-Verb, TapeHead, Repitch, Play Modes, Sidechain, Euclid, Mute Modes, Output Matrix, Deja Vu). The published package `7962c35a…` (Arp Key Locks), over USB with `npm run device -- try`.
+
+- A 20 s trial without Keep, project EMPTY: ran, then rolled back by itself.
+- Kept (`--accept`): the inventory named Arp Key Locks in place of the earlier `1d086d7b…` (ARP KEY LOCKS), the nine others unchanged. After a power cycle the flashed base listed the same ten modules, Arp Key Locks among them.
+- The base's self-test (PROJ > MODWERK > SELF TEST over USB), project EMPTY, three runs: one **failed**, "a core over 90 % (E-Verb)", the T5-8 DSP core at 98.5 %; two passed, T5-8 at 69.4 %. In all three, 10/10 modules intact, the three DSP effects ran, CPU 45.7-45.9 %, longest frame 414-420 µs; the DSPs did not stop. Arp Key Locks has no DSP code; the cause of the one spike is not established from three runs.
+- Project GAMUT, pattern 1, MIDI track 1 (the tester's own locks), played about 7 bars, recorded on the base's USB MIDI port with `aseqdump` (no clock sent, so the steps are not numbered): 16 notes a bar; notes 1-7 and 9-15 the same in every bar, notes 8 and 16 changing in a four-bar cycle (F♯4/A5, A4/C6, E4/G5, D4/F♯5) that repeated identically; 115 note-ons, each with its note-off. Reported: "I think I saw the arp changes in all bars", "seems to work". The notes were not compared with the locks the project holds.
+
 ## Not covered
 
-Card builds on a unit; Keep, a power cycle with the module kept, and the project saved and reloaded with locks on a unit; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).
+Card builds on a unit; playing the locks after the power cycle, and the project saved and reloaded with locks on a unit; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).

@@ -58,6 +58,12 @@ With nothing installed, the base matched stock: identical MIDI with KEY OFF, C M
 ✓ stress          1000 messages/s at 250 BPM for 62 s, no stuck note, no hang, 0 dropped
 ```
 
+## Submission checks (26 October 2026)
+
+- **Native/browser (`npm run module:verify -- arp-key-locks`):** 158 selections, 66 matching images (all outside the platform writes), 92 matching refusals, 0 mismatches. Native pairs: 31 modules, 465 pairs in 3 contexts, none refused with ARP KEY LOCKS. The chooser-metadata row the run adds is left out: the module has no effect id, and that file is a base input.
+- **Packages:** card packages compiled in the isolated toolchain image and imported; `octatrack:module-packages -- --check` with the toolchain: every package identical, ARP KEY LOCKS `7962c35a…` (ABI 8, no stock-code site), at most 10 non-zero bytes in a run shared with the stock OS.
+- **`module:doctor`:** every line green.
+
 ## Not tested
 
 On a unit (see evidence/hardware.md for what did run): card builds, Keep, a power cycle; the MKI panel; LEN and the arp note editor with a trig held; copying, clearing or placing trigs over locked steps; TRAN other than 0; notes from MIDI IN; Part copy and reload; a power cycle.

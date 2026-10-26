@@ -1,6 +1,6 @@
 # ARP KEY LOCKS: tests
 
-Draft `0.1.0-experimental`. The results below are from the host and the ColdFire emulator; the run on the author's MKII is in [evidence/hardware.md](evidence/hardware.md).
+Version `0.1.0-experimental`. The results below are from the host and the ColdFire emulator; the run on the author's MKII is in [evidence/hardware.md](evidence/hardware.md).
 
 ## What ran it
 
@@ -37,7 +37,7 @@ A local remix with ARP KEY LOCKS alone, built by Modwerk's `sdk/octabam` (`make 
 
 ## Emulator, USB on the base
 
-The package (`sdk/runtime/loader/build.py --octabam arp-key-locks --name "ARP KEY LOCKS"`, stock-free scan with `--stock`): 1,884 bytes of code and data, 40 of bss, 24 relocations, 3 hooks, no stock-code site. On the adapted emulator, base `2b032fd9…`, through the emulated USB link as the site does (stage, activate, trial, hold, accept): kept, inventory `ARP KEY LOCKS`, no refusal. Each event's subscriber list held the package's record, the note entry's bytes were the relocated code, and the claims answered in place: track 1 (locks) yes, track 4 (none) no, ARP SETUP's knob and text with no trig held no. The emulator cannot press PLAY after a USB install, so playback over USB is not tested; it runs the same code as the card build.
+The package (`sdk/runtime/loader/build.py --octabam arp-key-locks --name "ARP KEY LOCKS"`, stock-free scan with `--stock`), as first checked here, before the arp note shifts: 1,884 bytes of code and data, 40 of bss, 24 relocations, 3 hooks, no stock-code site. The submitted package `1d086d7b…` (with the shifts and a `module_tick` hook) has 4,396 bytes of code and data, 84 of bss, 68 relocations, 4 hooks and no stock-code site; rebuilt on 26 October 2026 after #857 merged into `main`, it came out byte for byte the same. On the adapted emulator, base `2b032fd9…`, through the emulated USB link as the site does (stage, activate, trial, hold, accept): kept, inventory `ARP KEY LOCKS`, no refusal. Each event's subscriber list held the package's record, the note entry's bytes were the relocated code, and the claims answered in place: track 1 (locks) yes, track 4 (none) no, ARP SETUP's knob and text with no trig held no. The emulator cannot press PLAY after a USB install, so playback over USB is not tested; it runs the same code as the card build.
 
 With nothing installed, the base matched stock: identical MIDI with KEY OFF, C MAJ and F MIN; identical locks and KEY changes from held-trig turns on the NOTE, ARP and ARP SETUP pages; four pixel-identical ARP SETUP captures.
 

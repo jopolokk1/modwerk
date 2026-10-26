@@ -6,9 +6,9 @@ Lock the arpeggiator's KEY on single steps of a MIDI track, the way you lock a p
 
 It can also move one note of the arpeggio on a trig: hold the trig, pick the arp note with D and move it up or down by steps of the key with E. On that trig's arpeggio, for example, the 4th note plays one step higher; the next trig without a setting plays the arpeggio as it is.
 
-Version `0.1.0-experimental`, for OS 1.40C card builds and, for beta testers, over USB on the Modwerk base.
+Version `0.1.0-experimental`, for OS 1.40C: over USB on the Modwerk base, and in card builds.
 
-**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as trials on the Modwerk base with its three events: the per-step keys and the arp note shifts came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). Card builds, Keep, a power cycle and the MKI are not tested.
+**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as trials on the Modwerk base with its three events (package `1d086d7b…`, the one submitted, in the third session): the per-step keys and the arp note shifts came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). Card builds, Keep, a power cycle and the MKI are not tested.
 
 ## Controls
 
@@ -74,4 +74,10 @@ Original module by @jopolokk1, MIT ([LICENSE](LICENSE)); code written with Claud
 
 ## Screens and audio
 
-[media/capture.json](media/capture.json) binds the screenshots to the build and panel walk that made them. Emulator LCD captures; no audio preview.
+Emulator LCD captures of a card build with this module alone; [media/capture.json](media/capture.json) binds them to the build and the panel walk that made them. No audio preview.
+
+| | |
+|---|---|
+| ![MIDI ARP SETUP with no trig held: KEY OFF](media/ot-arp-setup.png) | ![Holding a trig without a lock: --](media/ot-held-no-lock.png) |
+| ![F turned with the trig held: C MIN](media/ot-lock-c-minor.png) | ![Holding a step locked to F DOR](media/ot-held-f-dorian.png) |
+| ![D picks arp note N4](media/ot-shift-pick-note.png) | ![E moves it one step up: N4 +1](media/ot-shift-plus-one.png) |

@@ -8,13 +8,13 @@ It can also move one note of the arpeggio on a trig: hold the trig, pick the arp
 
 Version `0.1.0-experimental`, for OS 1.40C: over USB on the Modwerk base, and in card builds.
 
-**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as trials on the Modwerk base with its three events (package `1d086d7b…` in the third session): the per-step keys and the arp note shifts came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). On 26 October 2026 the published package `7962c35a…` was kept on the flashed base beside nine other modules, played the tester's locks and stayed kept through a power cycle; one of three base self-tests failed on DSP load. Card builds and the MKI are not tested.
+**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as trials on the Modwerk base with its three events (package `1d086d7b…` in the third session): the per-step keys and the arp note shifts came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). On 26 October 2026 the published package `7962c35a…` was kept on the flashed base beside nine other modules, played the tester's locks and stayed kept through a power cycle; one of three base self-tests failed on DSP load. On 27 October 2026 the submitted package `907a03cf…` was kept on the flashed base beside nine other modules: its locks played in their keys before and after saving and reloading the project, were ignored with the module removed, and it was kept again. Card builds, the MKI and playing locks after a power cycle are not tested.
 
 ## Controls
 
 | Where | Gesture | What it does |
 |---|---|---|
-| MIDI ARP SETUP (FUNC + AMP on a MIDI track) | Hold one or more trigs, turn F (KEY) | Locks a key on each held step. Turning starts from the step's own lock, or from the track's KEY when the step has none. |
+| MIDI ARP SETUP (hold trigs, then FUNC + AMP, on a MIDI track) | Hold one or more trigs, turn F (KEY) | Locks a key on each held step. Turning starts from the step's own lock, or from the track's KEY when the step has none. |
 | The same | Turn F down past OFF while holding | Removes the step's lock: the step follows the lock before it again. |
 | The same | Hold a trig, turn nothing | The KEY box shows the step's lock: root and mode (C / PHR), OFF, or -- for none. |
 | The same | Hold a trig, turn D | Picks the arp note to move, N1 to N16 (the arp sequence's notes, as LEN counts them). The first turn starts at the note the step already moves, else N1. Turned below N1: -- removes the step's arp note setting. |
@@ -30,15 +30,15 @@ Program the arpeggio as usual (NOTE and chord notes on the trigs, MODE on the AM
 
 ### Quick tutorial: a scale that changes every four steps
 
-1. Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording, then [FUNC] + [AMP] to open ARP SETUP.
-2. Hold trig 1 and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN), opening ARP SETUP with [FUNC] + [AMP] each time. While a trig is held the KEY box shows its lock.
+1. Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording.
+2. Hold trig 1, press [FUNC] + [AMP] to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.
 3. Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again.
 
 ### Move one arp note on a trig
 
-1. With the arpeggio playing a sequence of at least four notes (LEN 4 or more), hold the trig of step 9 in ARP SETUP (grid recording on).
+1. With the arpeggio playing a sequence of at least four notes (LEN 4 or more) and grid recording on, hold the trig of step 9 and press [FUNC] + [AMP].
 2. Turn D to N4, then E one detent up: the KEY box shows N4 over +1. Let go of the trig: ARP SETUP closes.
-3. Trig 9's arpeggio now plays its 4th note one step of the key higher; trig 1's plays as before. Open ARP SETUP again, hold trig 9 and turn D below N1 to remove it.
+3. Trig 9's arpeggio now plays its 4th note one step of the key higher; trig 1's plays as before. To remove it, hold trig 9 again, open ARP SETUP and turn D below N1.
 
 ### How locks combine
 
@@ -61,6 +61,7 @@ One stock gesture is touched:
 - OS 1.40C. Card builds patch three stock sites; over USB the Modwerk base shares them as events (`ev_midi_note_key`, `ev_arp_setup_knob`, `ev_arp_setup_text`), so the package patches no stock code. The base must carry those events.
 - The track's own KEY stays stock's (OFF, MAJOR or MINOR). The other modes exist only as step locks: a value stock's Part check rejects can lose the bank at power-up, so the module keeps its modes out of the Part.
 - A lock acts on the notes as the track sends them, after TRAN (read from the code; the emulator runs used TRAN 0). Notes played into the track from a MIDI keyboard are not tested.
+- A trig with negative micro-timing on the first step of a new lock sends its first note before that step begins, so that one note takes the previous step's key; the rest of its arpeggio takes the new one (measured on the MKII).
 - KEY moves one key per encoder detent with a trig held, as stock's KEY knob does; on the author's MKII it felt a bit sensitive.
 - Upstream octabam's MIDI Scales adds the same modes to the track's KEY by patching the same places; the two are not built together.
 

@@ -49,6 +49,18 @@ Flashed base `92a13ff0…` (main through #925 with the KEY events of #857), nine
 - The base's self-test (PROJ > MODWERK > SELF TEST over USB), project EMPTY, three runs: one **failed**, "a core over 90 % (E-Verb)", the T5-8 DSP core at 98.5 %; two passed, T5-8 at 69.4 %. In all three, 10/10 modules intact, the three DSP effects ran, CPU 45.7-45.9 %, longest frame 414-420 µs; the DSPs did not stop. Arp Key Locks has no DSP code; the cause of the one spike is not established from three runs.
 - Project GAMUT, pattern 1, MIDI track 1 (the tester's own locks), played about 7 bars, recorded on the base's USB MIDI port with `aseqdump` (no clock sent, so the steps are not numbered): 16 notes a bar; notes 1-7 and 9-15 the same in every bar, notes 8 and 16 changing in a four-bar cycle (F♯4/A5, A4/C6, E4/G5, D4/F♯5) that repeated identically; 115 note-ons, each with its note-off. Reported: "I think I saw the arp changes in all bars", "seems to work". The notes were not compared with the locks the project holds.
 
+## Fifth session, 27 October 2026: the reviewed fixes, package `907a03cf…`
+
+Flashed base `c1ae2ee9…` (main through #912), nine other modules kept (E-Verb, TapeHead, Repitch, Play Modes, Sidechain, Euclid, Mute Modes, Output Matrix, Deja Vu). Package `907a03cf…` (4,400 bytes of code and data, 84 of bss, 68 relocations, 4 hooks, no stock-code site), built from source `53b2b444` (the arp note shift stored + 7), over USB with `npm run device -- try`. Notes recorded on the base's USB MIDI port with `aseqdump`, timestamped on the computer (no clock sent).
+
+- A 20 s trial without Keep: ran, no refusals, rolled back by itself. Then kept (`--accept`): active `907a03cf…`, ten modules listed.
+- Reported: holding a trig, [FUNC] + [AMP], turning KEY and letting go closed ARP SETUP and showed the pattern's trigs.
+- Reported: on a held trig, D at N16 and E turned down showed -1 and further, down to -7 (in `1d086d7b…`/`7962c35a…` N16 -1 read as no setting).
+- Project GAMUT, MIDI track 1, 64 steps at about 112 BPM (134 ms a step), trigs on steps 1 and 17 with the same chord (A C E F, arp up and down over three octaves). Step 1 locked A MIN, step 17 locked G♯ MIN with micro-timing -1/64. Three loops, each the same: step 1 played A C E F; step 17's first note came 33-34 ms before its step and was A (45), in the previous step's key; every later note of its arpeggio was in G♯ minor (C to B, F to E, A to G♯). With step 17 at A DOR, F played as E; with G♯ MAJ, E played as D♯ and F as F.
+- The project saved and reloaded: three loops note for note the same as before.
+- Module removed over USB (`remove --accept`; the run's counter showed 2 refusals, no detail on this release base): three loops with both trigs playing the chord as written (A C E F), the G♯ MIN lock ignored, step 17 still 33 ms early. Then installed and kept again: active `907a03cf…`, ten modules.
+- 989 note-ons over the session, each with its note-off. No freeze or error.
+
 ## Not covered
 
-Card builds on a unit; playing the locks after the power cycle, and the project saved and reloaded with locks on a unit; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).
+Card builds on a unit; playing the locks after a power cycle; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).

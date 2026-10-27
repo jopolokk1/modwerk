@@ -5,10 +5,10 @@
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
-    "static": 281600,
+    "static": 282112,
     "measured": 32064,
     "budget": 2200000,
-    "method": "An event is one MIDI sequencer tick: the note hook runs in its interrupt (0x400a1e0c, vector 0x60), once per note a track sends, priced at 16 core cycles an instruction (the ColdFire V4 envelope Direct Jump's record uses). Static: 17,600 instructions, an upper bound from akl.s for the dearest tick: all eight MIDI tracks sending four notes each with every track's step answer uncached and no trig on any track, so both backward scans (the key, then the arp note shift, 64 steps each at about 10 and 12 instructions a step) run their full length, plus about 60 for the base's take dispatch and claim per note over USB. Measured on the card build under ot_emu --mkii (octabam 8250be0), 24 Oct 2026: PC watches on akl_note_entry and its two exits on a 64-step pattern whose only key lock sits just after the notes, with an arp note shift on step 14 (three tracks arpeggiating, every new step a full key scan): at most 900 instructions a note, 84-109 cached, 2,004 in the dearest tick (5 notes). Budget: the next tick, 8.33 ms at the top tempo of 300 BPM, 2,200,000 cycles at 264 MHz. Not chip timing."
+    "method": "An event is one MIDI sequencer tick: the note hook runs in its interrupt (0x400a1e0c, vector 0x60), once per note a track sends, priced at 16 core cycles an instruction (the ColdFire V4 envelope Direct Jump's record uses). Static: 17,632 instructions (17,600 before package 907a03cf, whose shift decode can add one a note), an upper bound from akl.s for the dearest tick: all eight MIDI tracks sending four notes each with every track's step answer uncached and no trig on any track, so both backward scans (the key, then the arp note shift, 64 steps each at about 10 and 12 instructions a step) run their full length, plus about 60 for the base's take dispatch and claim per note over USB. Measured on the card build under ot_emu --mkii (octabam 8250be0), 24 Oct 2026: PC watches on akl_note_entry and its two exits on a 64-step pattern whose only key lock sits just after the notes, with an arp note shift on step 14 (three tracks arpeggiating, every new step a full key scan): at most 900 instructions a note, 84-109 cached, 2,004 in the dearest tick (5 notes). Budget: the next tick, 8.33 ms at the top tempo of 300 BPM, 2,200,000 cycles at 264 MHz. Not chip timing."
   },
   "load": {
     "frameUs": 362.8,

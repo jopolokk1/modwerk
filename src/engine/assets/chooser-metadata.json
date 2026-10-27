@@ -114,13 +114,6 @@
       "fx1Only": true
     },
     {
-      "id": "poly8",
-      "key": "POLY8",
-      "fxId": null,
-      "fx1": false,
-      "fx1Only": false
-    },
-    {
       "id": "miniverb",
       "key": "MINIVERB",
       "fxId": 23,
@@ -255,6 +248,13 @@
       "fx1Only": false
     },
     {
+      "id": "poly8",
+      "key": "POLY8",
+      "fxId": null,
+      "fx1": false,
+      "fx1Only": false
+    },
+    {
       "id": "output-matrix",
       "key": "OUTPUT MATRIX",
       "fxId": null,
@@ -271,6 +271,13 @@
     {
       "id": "apply-scene",
       "key": "APPLY SCENE",
+      "fxId": null,
+      "fx1": false,
+      "fx1Only": false
+    },
+    {
+      "id": "arp-key-locks",
+      "key": "ARP KEY LOCKS",
       "fxId": null,
       "fx1": false,
       "fx1Only": false

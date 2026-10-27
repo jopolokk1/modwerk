@@ -7,7 +7,7 @@
       "Seven modes in all twelve roots: Major, Dorian, Phrygian, Lydian, Mixolydian, Minor and Locrian. The arpeggio keeps running while the key changes.",
       "Move one arp note on a trig: hold it, pick the note with D, shift it by steps of the key with E. The next trig without a setting plays the arpeggio as it is.",
       "While a trig is held, ARP SETUP's KEY box shows its key or its arp note shift.",
-      "Known issue: tested on one MKII over USB, kept through a power cycle; not yet playing locks after one, saving and reloading a project, on the MKI or as a card build."
+      "Known issue: tested on one MKII over USB; not yet on the MKI or as a card build."
     ]
   }
 ]

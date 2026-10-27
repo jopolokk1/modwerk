@@ -60,7 +60,8 @@ Flashed base `c1ae2ee9…` (main through #912), nine other modules kept (E-Verb,
 - The project saved and reloaded: three loops note for note the same as before.
 - Module removed over USB (`remove --accept`; the run's counter showed 2 refusals, no detail on this release base): three loops with both trigs playing the chord as written (A C E F), the G♯ MIN lock ignored, step 17 still 33 ms early. Then installed and kept again: active `907a03cf…`, ten modules.
 - 989 note-ons over the session, each with its note-off. No freeze or error.
+- **After a power cycle:** the flashed base listed the same ten modules, Arp Key Locks among them; GAMUT loaded and three loops played note for note as before (step 17's early first note still A, the rest in G♯ minor). 194 note-ons, each with its note-off.
 
 ## Not covered
 
-Card builds on a unit; playing the locks after a power cycle; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).
+Card builds on a unit; the MKI; PER TRACK lengths, Part changes and copying trigs on a unit; TRAN other than 0; load and timing on the unit (the performance record is emulator figures).

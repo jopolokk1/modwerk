@@ -274,13 +274,6 @@
       "fxId": null,
       "fx1": false,
       "fx1Only": false
-    },
-    {
-      "id": "arp-key-locks",
-      "key": "ARP KEY LOCKS",
-      "fxId": null,
-      "fx1": false,
-      "fx1Only": false
     }
   ],
   "customIds": [

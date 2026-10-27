@@ -9200,9 +9200,9 @@
       "version": "0.1.0-experimental",
       "category": "midi-usb",
       "access": {
-        "location": "MIDI ARP SETUP: in grid recording on a MIDI track, hold a trig, then [FUNC] + [AMP].",
+        "location": "MIDI ARP SETUP: in grid recording on a MIDI track, hold a trig, then [FUNC] + [AMP] or [AMP] twice.",
         "steps": [
-          "On a MIDI track that plays an arpeggio, press [REC] for grid recording. Hold the trig of a step, then press [FUNC] + [AMP] to open MIDI ARP SETUP for it.",
+          "On a MIDI track that plays an arpeggio, press [REC] for grid recording. Hold the trig of a step, then press [FUNC] + [AMP] (or [AMP] twice) to open MIDI ARP SETUP for it.",
           "Still holding the trig, turn F (KEY) to lock that step's key, for example F DOR; the key holds until the next locked step. Turn below OFF to remove the lock.",
           "Still holding it, pick an arp note with D (N1-N16) and shift it with E (-7 to +7 steps of the key). Turn D below N1 to remove it.",
           "Let go of the trig: ARP SETUP closes and the pattern's trigs show again, ready for the next step (a card build stays in ARP SETUP). Press [PLAY] to hear the keys change while the arpeggio keeps running."
@@ -9234,7 +9234,7 @@
           "Over USB it uses the Modwerk base's shared events and patches no stock code."
         ],
         "usage": [
-          "On a MIDI track that plays an arpeggio, press [REC] for grid recording. Hold the trig of a step, then press [FUNC] + [AMP] to open MIDI ARP SETUP for it.",
+          "On a MIDI track that plays an arpeggio, press [REC] for grid recording. Hold the trig of a step, then press [FUNC] + [AMP] (or [AMP] twice) to open MIDI ARP SETUP for it.",
           "Still holding the trig, turn F (KEY) to lock that step's key, for example F DOR; the key holds until the next locked step. Turn below OFF to remove the lock.",
           "Still holding it, pick an arp note with D (N1-N16) and shift it with E (-7 to +7 steps of the key). Turn D below N1 to remove it.",
           "Let go of the trig: ARP SETUP closes and the pattern's trigs show again, ready for the next step (a card build stays in ARP SETUP). Press [PLAY] to hear the keys change while the arpeggio keeps running."
@@ -9459,7 +9459,7 @@
             "title": "Quick tutorial: a scale that changes every four steps",
             "steps": [
               "Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording.",
-              "Hold trig 1, press [FUNC] + [AMP] to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.",
+              "Hold trig 1, press [FUNC] + [AMP] (or [AMP] twice) to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.",
               "Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again."
             ]
           },
@@ -9479,7 +9479,7 @@
               "title": "Quick tutorial: a scale that changes every four steps",
               "steps": [
                 "Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording.",
-                "Hold trig 1, press [FUNC] + [AMP] to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.",
+                "Hold trig 1, press [FUNC] + [AMP] (or [AMP] twice) to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.",
                 "Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again."
               ]
             },

@@ -143,24 +143,29 @@ int main(void)
     assert(akl_turn(3, 1)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N1") && !strcmp(text, "--")); /* first turn: N1 */
     assert(akl_turn(3, 3)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N4"));
     assert(bank0[TRACK(t) + LOCK31(8)] == NONE);           /* picking stores nothing */
-    assert(akl_turn(4, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x31 && cs1[TRACK(t) + LOCK31(8)] == 0x31);
+    assert(akl_turn(4, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x38 && cs1[TRACK(t) + LOCK31(8)] == 0x38);
     akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "+1"));
-    assert(akl_turn(4, -3) && bank0[TRACK(t) + LOCK31(8)] == 0x3e);   /* -2 */
+    assert(akl_turn(4, -3) && bank0[TRACK(t) + LOCK31(8)] == 0x35);   /* -2 */
     akl_key_text(text, 0); assert(!strcmp(text, "-2"));
     assert(akl_turn(3, 20)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N16") && !strcmp(text, "--")); /* clamped */
     assert(akl_turn(3, -12)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "-2"));
     assert(akl_turn(5, 1) && bank0[TRACK(t) + LOCK30(8)] == 7);       /* KEY: the held step */
     akl_key_text(text, 0); assert(!strcmp(text, "LOC") && !strcmp(text + 5, "C")); /* KEY shown: C LOC (7) */
     assert(!akl_turn(2, 1) && !akl_turn(6, 1) && !akl_turn(0, 1));    /* LEN, the note editor, A: stock's */
-    assert(akl_turn(4, 2) && bank0[TRACK(t) + LOCK31(8)] == 0x30);    /* 0: back to normal from here, kept */
+    assert(akl_turn(4, 2) && bank0[TRACK(t) + LOCK31(8)] == 0x37);    /* 0: back to normal from here, kept */
     akl_key_text(text, 0); assert(!strcmp(text, "0"));
     assert(akl_turn(3, -4)); assert(bank0[TRACK(t) + LOCK31(8)] == NONE); /* D below N1: removed */
     akl_key_text(text, 0); assert(!strcmp(text + 5, "--"));
     assert(akl_turn(3, 4)); akl_key_text(text, 0); assert(!strcmp(text + 5, "N1")); /* back up: N1 */
-    assert(akl_turn(3, 3) && akl_turn(4, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x31);
+    assert(akl_turn(3, 3) && akl_turn(4, 1) && bank0[TRACK(t) + LOCK31(8)] == 0x38);
     *mem(KEY_ROWS + 1) = 0; assert(akl_text_claims(5) == 0 && !akl_turn(4, 1)); /* nothing held: stock's */
     *mem(KEY_ROWS + 1) = 1; assert(akl_text_claims(5)); assert(akl_turn(3, 0)); /* held again: D starts at the shifted note */
     akl_key_text(text, 0); assert(!strcmp(text + 5, "N4") && !strcmp(text, "+1"));
+    /* N16 shifted down by one is a setting, not NONE (0xff), and keeps going down. */
+    assert(akl_turn(3, 20) && akl_turn(4, -1) && bank0[TRACK(t) + LOCK31(8)] == 0xf6);
+    akl_key_text(text, 0); assert(!strcmp(text + 5, "N16") && !strcmp(text, "-1"));
+    assert(akl_turn(4, -1) && bank0[TRACK(t) + LOCK31(8)] == 0xf5);
+    bank0[TRACK(t) + LOCK31(8)] = 0x38;                    /* back to N4 +1 for the playing below */
     *mem(KEY_ROWS + 1) = 0; akl_text_claims(5);
 
     /* Playing, track 6: trigs on steps 1 and 9, the arp on (MODE), LEN 4 (setup +0x0e is 3), track KEY C MIN. */
@@ -178,16 +183,16 @@ int main(void)
     at_step(t, 0); assert(!akl_claims(t));                                  /* trig 1, no setting: normal */
     at_step(t, 5); assert(!akl_claims(t));
     /* A trigless trig on step 10 with a condition: only when stock fires it (its record carries the setting). */
-    bank0[TRACK(t) + LOCK31(8)] = NONE; bank0[TRACK(t) + LOCK31(9)] = 0x31; gen++;
+    bank0[TRACK(t) + LOCK31(8)] = NONE; bank0[TRACK(t) + LOCK31(9)] = 0x38; gen++;
     at_step(t, 8); assert(!akl_claims(t));                                  /* trig 9 itself: normal */
-    mem(FIRED(t))[31] = 0x31;                                               /* the trigless one is coming and fires */
+    mem(FIRED(t))[31] = 0x38;                                               /* the trigless one is coming and fires */
     assert(akl_claims(t)); note = 67; assert(akl_note(t, &note) && note == 68);
     at_step(t, 9); mem(FIRED(t))[31] = NONE; assert(akl_claims(t));         /* holds after it */
     at_step(t, 0); assert(!akl_claims(t));                                  /* the next note trig: normal */
     at_step(t, 8); assert(!akl_claims(t));                                  /* a loop where it does not fire */
     at_step(t, 9); assert(!akl_claims(t));
     /* A record ahead of a note trig does not count early: step 9 coming, step 8 playing. */
-    at_step(t, 7); mem(FIRED(t))[31] = 0x31; assert(!akl_claims(t));
+    at_step(t, 7); mem(FIRED(t))[31] = 0x38; assert(!akl_claims(t));
     mem(FIRED(t))[31] = NONE;
 
     /* Close on release: after an edit with a trig held, letting go closes ARP SETUP (stock's close, then a redraw). */

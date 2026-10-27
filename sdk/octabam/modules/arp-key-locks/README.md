@@ -8,7 +8,7 @@ It can also move one note of the arpeggio on a trig: hold the trig, pick the arp
 
 Version `0.1.0-experimental`, for OS 1.40C: over USB on the Modwerk base, and in card builds.
 
-**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as trials on the Modwerk base with its three events (package `1d086d7b…`, the one submitted, in the third session): the per-step keys and the arp note shifts came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). On 26 October 2026 the published package `7962c35a…` was kept on the flashed base beside nine other modules, played the tester's locks and stayed kept through a power cycle; one of three base self-tests failed on DSP load. Card builds and the MKI are not tested.
+**Hardware status.** Ran on the author's MKII over USB on 24 October 2026, as trials on the Modwerk base with its three events (package `1d086d7b…` in the third session): the per-step keys and the arp note shifts came out right on MIDI and the gestures behaved as described ([evidence/hardware.md](evidence/hardware.md)). On 26 October 2026 the published package `7962c35a…` was kept on the flashed base beside nine other modules, played the tester's locks and stayed kept through a power cycle; one of three base self-tests failed on DSP load. Card builds and the MKI are not tested.
 
 ## Controls
 
@@ -31,14 +31,14 @@ Program the arpeggio as usual (NOTE and chord notes on the trigs, MODE on the AM
 ### Quick tutorial: a scale that changes every four steps
 
 1. Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording, then [FUNC] + [AMP] to open ARP SETUP.
-2. Hold trig 1 and turn KEY to C MIN; release it. Hold trig 5 and turn KEY to F DOR, then trig 9 to G PHR and trig 13 to C MIN. While a trig is held the KEY box shows its lock.
+2. Hold trig 1 and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN), opening ARP SETUP with [FUNC] + [AMP] each time. While a trig is held the KEY box shows its lock.
 3. Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again.
 
 ### Move one arp note on a trig
 
 1. With the arpeggio playing a sequence of at least four notes (LEN 4 or more), hold the trig of step 9 in ARP SETUP (grid recording on).
-2. Turn D to N4, then E one detent up: the KEY box shows N4 over +1. Release the trig.
-3. Trig 9's arpeggio now plays its 4th note one step of the key higher; trig 1's plays as before. Hold trig 9 and turn D below N1 to remove it.
+2. Turn D to N4, then E one detent up: the KEY box shows N4 over +1. Let go of the trig: ARP SETUP closes.
+3. Trig 9's arpeggio now plays its 4th note one step of the key higher; trig 1's plays as before. Open ARP SETUP again, hold trig 9 and turn D below N1 to remove it.
 
 ### How locks combine
 
@@ -52,8 +52,8 @@ One stock gesture is touched:
 
 - **What changes and for whom.** In MIDI ARP SETUP, turning KEY while a trig is held stores a lock on the held steps instead of changing the track's KEY, encoders D and E (unused there on stock) set the held step's arp note shift, and the KEY box shows the held step's lock or shift. On the stock OS a held trig makes no difference there: the turn edits the track's KEY. Everyone with the module in their build or module set has the gesture.
 - **Why.** A step's key belongs where KEY already is, and the held-trig gesture is how every other value is locked. Stock's own lock storage has no slot for a setup value, so the lock lives in a step's spare lock byte, which stock neither edits, applies nor validates.
-- **What you see and do differently.** With a trig held, KEY reads the step's lock (-- for none) and turning it edits that lock; D and E edit the step's arp note shift. KEY without a held trig, LEN, the arp note editor, tapping a trig to switch an arp step, and every other page are unchanged.
-- **Turning it off.** Release the trig: KEY is the track's again. Remove the module and the locks stay in the project, unused: stock never reads them.
+- **What you see and do differently.** With a trig held, KEY reads the step's lock (-- for none) and turning it edits that lock; D and E edit the step's arp note shift. Over USB, letting go of every trig after such an edit closes ARP SETUP, as [FUNC] + [AMP] does, and shows the pattern's trigs again, so the next step can be picked there; tapping a trig without turning anything leaves ARP SETUP open, as on stock. A card build stays in ARP SETUP. KEY without a held trig, LEN, the arp note editor, tapping a trig to switch an arp step, and every other page are unchanged.
+- **Turning it off.** Let go of the trig: KEY is the track's again. Remove the module and the locks stay in the project, unused: stock never reads them.
 - **Neighbouring flows checked** (emulator, MKII panel, against the original OS): KEY without a held trig; a held trig's NOTE and NLEN locks on the NOTE and ARP pages; the trig pattern and the arp's step mask while trigs are pressed and D and E turned in ARP SETUP. Not checked: the MKI panel, LEN or the note editor with a trig held.
 
 ## Compatibility and limitations

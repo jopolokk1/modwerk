@@ -16,7 +16,7 @@
 #define PATTERN 0x8ed8u
 #define MIDI_TRACK(t) (0x48d0u + (uint32_t)(t) * 0x8b0u) /* a MIDI track's record in its pattern */
 #define LOCK30(s) (0x30u + (uint32_t)(s) * 32u + 30u)     /* step s's spare lock byte: its key */
-#define LOCK31(s) (0x30u + (uint32_t)(s) * 32u + 31u)     /* the other: arp note (high nibble), shift (low, signed; 0 ends one) */
+#define LOCK31(s) (0x30u + (uint32_t)(s) * 32u + 31u)     /* the other: arp note (high nibble), shift + 7 (low; 0 ends one) */
 #define ARP_POS(t) (0x46c77b17u + 10u * (t))            /* MIDI track t's arpeggiator: its place in the note sequence (0..LEN) */
 #define ARP_MODE(t) (0x46c76fe0u + 32u * (t) + 14u)     /* its MODE as it plays (locks applied), 0 OFF */
 #define LIVE_KEY(t) (0x46c76df1u + 0x44u * (t))         /* the track's KEY as it plays */
@@ -36,6 +36,7 @@
 #define PART_KEY(t) (0x8f273u + (uint32_t)(t) * 0x24u)  /* in the UI's bank + Part * 0x18b2: setup +0x11 */
 
 #define NONE 0xffu
+#define SHIFT(r) ((int)((r) & 15u) - 7) /* lock 31's shift, -7 to +7: stored + 7, so N16 -1 never reads as NONE */
 #define LAST 84u /* 0 OFF, then 1 + 7 * root + mode */
 
 /* The seven modes, bit k for k semitones above the root. */
@@ -150,7 +151,7 @@ static void track_trigs(void)
 static unsigned shift_now(unsigned t)
 {
     unsigned r = shift_now_r[t];
-    if (r == NONE || !(r & 15u) || !U8(ARP_MODE(t))) return NONE; /* 0: back to the arp's own note */
+    if (r == NONE || !SHIFT(r) || !U8(ARP_MODE(t))) return NONE; /* 0: back to the arp's own note */
     unsigned pos = U8(ARP_POS(t)), n = U8(LIVE_KEY(t) - 0x11u + 0x0eu) + 1u; /* the arp's LEN, setup +0x0e, 0-15 */
     return n && pos % n == (r >> 4) ? r : NONE;
 }
@@ -171,7 +172,7 @@ int akl_note(unsigned t, volatile int8_t *note)
     unsigned key = akl_key(t), r = shift_now(t);
     if (key == NONE && r == NONE) return 0;
     if (key == NONE) key = from_stock(U8(LIVE_KEY(t)));
-    if (*note >= 0) *note = (int8_t)(r == NONE ? akl_snap(*note, key) : akl_move(*note, key, (int)((r & 15u) ^ 8u) - 8));
+    if (*note >= 0) *note = (int8_t)(r == NONE ? akl_snap(*note, key) : akl_move(*note, key, SHIFT(r)));
     return 1;
 }
 
@@ -251,11 +252,11 @@ static void akl_shift(int delta)
     if (!at) return;
     if (order_note < 0) order_note = -1, pick_note();
     unsigned r = U8(at);
-    int k = r != NONE && (int)(r >> 4) == order_note ? (int)((r & 15u) ^ 8u) - 8 : 0;
+    int k = r != NONE && (int)(r >> 4) == order_note ? SHIFT(r) : 0;
     if (r != NONE && (int)(r >> 4) == order_note) k += delta;
     else k = delta;
     k = k < -7 ? -7 : k > 7 ? 7 : k;
-    store_shift(at, (unsigned)order_note << 4 | ((unsigned)k & 15u));
+    store_shift(at, (unsigned)order_note << 4 | (unsigned)(k + 7));
     after_edit(delta, 1);
 }
 
@@ -326,7 +327,7 @@ void akl_key_text(volatile char *buffer, unsigned value)
         char top[4] = {'N', (char)('1' + order_note % 9), 0, 0}, low[3] = {'-', '-', 0};
         if (order_note >= 9) { top[1] = '1'; top[2] = (char)('0' + order_note - 9); }
         if (r != NONE && (int)(r >> 4) == order_note) {
-            int k = (int)((r & 15u) ^ 8u) - 8;
+            int k = SHIFT(r);
             if (!k) { low[0] = '0'; low[1] = 0; }
             else { low[0] = k < 0 ? '-' : '+'; low[1] = (char)('0' + (k < 0 ? -k : k)); }
         }

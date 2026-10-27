@@ -55,6 +55,7 @@ Flashed base `c1ae2ee9…` (main through #912), nine other modules kept (E-Verb,
 
 - A 20 s trial without Keep: ran, no refusals, rolled back by itself. Then kept (`--accept`): active `907a03cf…`, ten modules listed.
 - Reported: holding a trig, [FUNC] + [AMP], turning KEY and letting go closed ARP SETUP and showed the pattern's trigs.
+- Reported, after the power cycle: holding a trig and pressing [AMP] twice also opened ARP SETUP; turning KEY and letting go closed it the same way.
 - Reported: on a held trig, D at N16 and E turned down showed -1 and further, down to -7 (in `1d086d7b…`/`7962c35a…` N16 -1 read as no setting).
 - Project GAMUT, MIDI track 1, 64 steps at about 112 BPM (134 ms a step), trigs on steps 1 and 17 with the same chord (A C E F, arp up and down over three octaves). Step 1 locked A MIN, step 17 locked G♯ MIN with micro-timing -1/64. Three loops, each the same: step 1 played A C E F; step 17's first note came 33-34 ms before its step and was A (45), in the previous step's key; every later note of its arpeggio was in G♯ minor (C to B, F to E, A to G♯). With step 17 at A DOR, F played as E; with G♯ MAJ, E played as D♯ and F as F.
 - The project saved and reloaded: three loops note for note the same as before.

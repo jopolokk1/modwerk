@@ -14,7 +14,7 @@ Version `0.1.0-experimental`, for OS 1.40C: over USB on the Modwerk base, and in
 
 | Where | Gesture | What it does |
 |---|---|---|
-| MIDI ARP SETUP (hold trigs, then FUNC + AMP, on a MIDI track) | Hold one or more trigs, turn F (KEY) | Locks a key on each held step. Turning starts from the step's own lock, or from the track's KEY when the step has none. |
+| MIDI ARP SETUP (hold trigs, then FUNC + AMP or AMP twice, on a MIDI track) | Hold one or more trigs, turn F (KEY) | Locks a key on each held step. Turning starts from the step's own lock, or from the track's KEY when the step has none. |
 | The same | Turn F down past OFF while holding | Removes the step's lock: the step follows the lock before it again. |
 | The same | Hold a trig, turn nothing | The KEY box shows the step's lock: root and mode (C / PHR), OFF, or -- for none. |
 | The same | Hold a trig, turn D | Picks the arp note to move, N1 to N16 (the arp sequence's notes, as LEN counts them). The first turn starts at the note the step already moves, else N1. Turned below N1: -- removes the step's arp note setting. |
@@ -31,12 +31,12 @@ Program the arpeggio as usual (NOTE and chord notes on the trigs, MODE on the AM
 ### Quick tutorial: a scale that changes every four steps
 
 1. Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording.
-2. Hold trig 1, press [FUNC] + [AMP] to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.
+2. Hold trig 1, press [FUNC] + [AMP] (or [AMP] twice) to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.
 3. Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again.
 
 ### Move one arp note on a trig
 
-1. With the arpeggio playing a sequence of at least four notes (LEN 4 or more) and grid recording on, hold the trig of step 9 and press [FUNC] + [AMP].
+1. With the arpeggio playing a sequence of at least four notes (LEN 4 or more) and grid recording on, hold the trig of step 9 and press [FUNC] + [AMP] (or [AMP] twice).
 2. Turn D to N4, then E one detent up: the KEY box shows N4 over +1. Let go of the trig: ARP SETUP closes.
 3. Trig 9's arpeggio now plays its 4th note one step of the key higher; trig 1's plays as before. To remove it, hold trig 9 again, open ARP SETUP and turn D below N1.
 
